@@ -8,7 +8,7 @@
 #include <tchar.h>
 
 #define ZER0_WIDTH 350
-#define ZER0_HEIGHT 420
+#define ZER0_HEIGHT 460
 
 class Menu
 {
@@ -16,6 +16,16 @@ public:
 	Menu();
 
 	void mainMenu();
-private:
 
+	bool AppOpen = true;
+	ID3D11ShaderResourceView* my_texture = NULL;
+	ImVec2 image_size;
+	ImFont* smallFont;
+private:
+	char usernameBuf[120] = {};
+	char passwordBuf[120] = {};
+
+	void login(bool& login);
+	void cheats();
+	bool loggedIn = false;
 };

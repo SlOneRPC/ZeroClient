@@ -2,6 +2,9 @@
 // If you are new to dear imgui, see examples/README.txt and documentation at the top of imgui.cpp.
 #include <iostream>
 #include "Menu.h"
+#include "Font.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 // Data
 static ID3D11Device*            g_pd3dDevice = NULL;
 static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
@@ -13,7 +16,59 @@ bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
+
+RECT rc;
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#ifndef _DEBUG
+    #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#endif 
+// Simple helper function to load an image into a DX11 texture with common settings
+bool LoadTextureFromFile(const char* filename, ID3D11ShaderResourceView** out_srv, int* out_width, int* out_height)
+{
+    // Load from disk into a raw RGBA buffer
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
+        return false;
+
+    // Create texture
+    D3D11_TEXTURE2D_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
+    desc.Width = image_width;
+    desc.Height = image_height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = 0;
+
+    ID3D11Texture2D* pTexture = NULL;
+    D3D11_SUBRESOURCE_DATA subResource;
+    subResource.pSysMem = image_data;
+    subResource.SysMemPitch = desc.Width * 4;
+    subResource.SysMemSlicePitch = 0;
+    g_pd3dDevice->CreateTexture2D(&desc, &subResource, &pTexture);
+
+    // Create texture view
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    g_pd3dDevice->CreateShaderResourceView(pTexture, &srvDesc, out_srv);
+    pTexture->Release();
+
+    *out_width = image_width;
+    *out_height = image_height;
+    stbi_image_free(image_data);
+
+    return true;
+}
 
 // Main code
 int main(int, char**)
@@ -21,7 +76,7 @@ int main(int, char**)
     // Create application window
     WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("Zero Client"), NULL };
     ::RegisterClassEx(&wc);
-    HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("ZeroClient"), WS_POPUP, 100, 100, ZER0_WIDTH, ZER0_HEIGHT, NULL, NULL, wc.hInstance, NULL);
+    HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("ZeroClient"), WS_POPUP, 0, 0, ZER0_WIDTH, ZER0_HEIGHT, NULL, NULL, wc.hInstance, NULL);
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -31,9 +86,25 @@ int main(int, char**)
         return 1;
     }
 
+#ifdef _DEBUG
+    AllocConsole();
+    SetConsoleTitle(L"Client Debug");
+
+    // Create a handle and bind conout to STDOUT and STDERR.
+    FILE* pCout;
+    freopen_s(&pCout, "conout$", "w", stdout);
+    freopen_s(&pCout, "conout$", "w", stderr);
+#endif 
+
+
     // Show the window
     ::ShowWindow(hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hwnd);
+
+    ::GetWindowRect(hwnd, &rc);
+    const int xPos = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
+    const int yPos = (GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2;
+    ::SetWindowPos(hwnd, 0, xPos, yPos, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -63,7 +134,10 @@ int main(int, char**)
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+      //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
+    ImFont* font = ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(Roboto_Regular_compressed_data, Roboto_Regular_compressed_size, 19);
+    IM_ASSERT(font != NULL);
 
     // Our state
     bool show_demo_window = true;
@@ -73,8 +147,18 @@ int main(int, char**)
     // Main loop
     MSG msg;
     ZeroMemory(&msg, sizeof(msg));
+
     auto menu = std::make_unique<Menu>();
-    while (msg.message != WM_QUIT)
+    int my_image_width = 0;
+    int my_image_height = 0;
+    bool ret = LoadTextureFromFile("C:\\Users\\joeyl\\Desktop\\Projects\\ZeroClient\\build\\testimg.png", &menu->my_texture, &my_image_width, &my_image_height);
+    menu->image_size = ImVec2(my_image_width, my_image_height);
+    IM_ASSERT(ret);
+
+    menu->smallFont = ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(Roboto_Regular_compressed_data, Roboto_Regular_compressed_size, 15);
+    IM_ASSERT(menu->smallFont != NULL);
+
+    while (menu->AppOpen)
     {
         // Poll and handle messages (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
