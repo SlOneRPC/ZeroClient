@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="deps\IMGUI\imgui.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_demo.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_draw.cpp" />
@@ -97,6 +98,7 @@
     <ClCompile Include="Menu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Client.h" />
     <ClInclude Include="deps\IMGUI\imconfig.h" />
     <ClInclude Include="deps\IMGUI\imgui.h" />
     <ClInclude Include="deps\IMGUI\imgui_impl_dx11.h" />

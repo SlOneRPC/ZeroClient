@@ -5,6 +5,9 @@
 #include "Font.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+using namespace std::chrono_literals;
+
 // Data
 static ID3D11Device*            g_pd3dDevice = NULL;
 static ID3D11DeviceContext*     g_pd3dDeviceContext = NULL;
@@ -17,6 +20,7 @@ void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
 
+std::unique_ptr<Menu> m_Menu;
 RECT rc;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -68,6 +72,16 @@ bool LoadTextureFromFile(const char* filename, ID3D11ShaderResourceView** out_sr
     stbi_image_free(image_data);
 
     return true;
+}
+
+void createClient() {
+    m_Client = std::make_unique<Client>();
+    if(m_Client->sendrecieve("Test") == "Test")
+         m_Menu->state = state::login;
+    else {
+        std::this_thread::sleep_for(2000ms);
+        m_Menu->AppOpen = false;
+    }
 }
 
 // Main code
@@ -148,17 +162,22 @@ int main(int, char**)
     MSG msg;
     ZeroMemory(&msg, sizeof(msg));
 
-    auto menu = std::make_unique<Menu>();
+
+    m_Menu = std::make_unique<Menu>();
+
+    std::thread s(createClient);
+    s.detach();
+
     int my_image_width = 0;
     int my_image_height = 0;
-    bool ret = LoadTextureFromFile("C:\\Users\\joeyl\\Desktop\\Projects\\ZeroClient\\build\\testimg.png", &menu->my_texture, &my_image_width, &my_image_height);
-    menu->image_size = ImVec2(my_image_width, my_image_height);
+    bool ret = LoadTextureFromFile("C:\\Users\\joeyl\\Desktop\\Projects\\ZeroClient\\build\\testimg.png", &m_Menu->my_texture, &my_image_width, &my_image_height);
+    m_Menu->image_size = ImVec2(my_image_width, my_image_height);
     IM_ASSERT(ret);
 
-    menu->smallFont = ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(Roboto_Regular_compressed_data, Roboto_Regular_compressed_size, 15);
-    IM_ASSERT(menu->smallFont != NULL);
+    m_Menu->smallFont = ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(Roboto_Regular_compressed_data, Roboto_Regular_compressed_size, 15);
+    IM_ASSERT(m_Menu->smallFont != NULL);
 
-    while (menu->AppOpen)
+    while (m_Menu->AppOpen)
     {
         // Poll and handle messages (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -177,7 +196,7 @@ int main(int, char**)
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        menu->mainMenu();
+        m_Menu->mainMenu();
 
         // Rendering
         ImGui::Render();
@@ -188,7 +207,8 @@ int main(int, char**)
         g_pSwapChain->Present(1, 0); // Present with vsync
         //g_pSwapChain->Present(0, 0); // Present without vsync
     }
-    menu.reset();
+    m_Menu.reset();
+    m_Client.reset();
     // Cleanup
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();

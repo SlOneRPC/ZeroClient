@@ -2,10 +2,14 @@
 #include <iostream>
 #define COLOUR(x) x/255 
 #define CENTER(width) ((ImGui::GetWindowSize().x - width) * 0.5f)
-#define DEBUGLOG(msg) std::cout << msg << std::endl;
+#ifdef _DEBUG
+#define DEBUGLOG(msg) std::cout << msg << std::endl;   
+#else
+#define DEBUGLOG(msg)
+#endif 
 
 Menu::Menu() {
-	//setup colours setup
+	//setup colours
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.Colors[ImGuiCol_WindowBg] =  ImVec4(COLOUR(30.0f), COLOUR(30.0f), COLOUR(30.0f), 1.f);
 	style.Colors[ImGuiCol_TitleBgActive] = ImVec4(COLOUR(50.0f), COLOUR(50.0f), COLOUR(50.0f), 1.f);
@@ -31,15 +35,20 @@ void Menu::mainMenu() {
 		ImGuiWindowFlags_NoScrollbar|
 		ImGuiWindowFlags_NoFocusOnAppearing))
 	{
-		if (!loggedIn)
-			login(loggedIn);
-		else
+		if (state == 0) {
+			loading();
+		}
+		else if (state == 1) {
+			login(state);
+		}
+		else if (state == 2) {
 			cheats();
+		}
 	}
 	ImGui::End();
 }
 
-void Menu::login(bool& loggedIn)
+void Menu::login(int& loggedIn)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 10));
 	{
@@ -86,7 +95,7 @@ void Menu::login(bool& loggedIn)
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
 			{
 				if (ImGui::Button("Login", ImVec2(120, 40))) {
-					loggedIn = true;
+					loggedIn = state::cheats;
 					DEBUGLOG("User logged in");
 				}
 			}
@@ -130,4 +139,18 @@ void Menu::cheats() {
 		ImGui::PopFont();
 	}
 	ImGui::PopStyleVar();
+}
+
+void Menu::loading() {
+	ImGui::SetCursorPosX(CENTER(image_size.x));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 60));
+	{
+		if (my_texture) {
+			ImGui::Image((void*)my_texture, image_size);
+		}
+	}
+	ImGui::PopStyleVar();
+
+	ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize("Loading...").x));
+	ImGui::Text("Loading...");
 }
