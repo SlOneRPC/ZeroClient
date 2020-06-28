@@ -99,6 +99,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
+    <ClInclude Include="deps\cryptopp\aes.h" />
+    <ClInclude Include="deps\cryptopp\aes_armv4.h" />
     <ClInclude Include="deps\IMGUI\imconfig.h" />
     <ClInclude Include="deps\IMGUI\imgui.h" />
     <ClInclude Include="deps\IMGUI\imgui_impl_dx11.h" />
@@ -109,6 +111,9 @@
     <ClInclude Include="deps\IMGUI\imstb_truetype.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Menu.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="deps\cryptopp\aes_armv4.S" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

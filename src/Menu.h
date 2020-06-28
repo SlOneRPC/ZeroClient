@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
+#include "imgui_internal.h"
 #include <d3d11.h>
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
@@ -10,7 +11,7 @@
 #include <thread>
 
 #define ZER0_WIDTH 350
-#define ZER0_HEIGHT 460
+#define ZER0_HEIGHT 430
 
 enum state {
 	loading,
@@ -30,6 +31,7 @@ public:
 	ImVec2 image_size;
 	ImFont* smallFont;
 	int state = state::loading;
+	std::string loadingType = "Loading..";
 private:
 	char usernameBuf[120] = {};
 	char passwordBuf[120] = {};

@@ -1,5 +1,6 @@
 #include "Menu.h"
 #include <iostream>
+#include <algorithm> 
 #define COLOUR(x) x/255 
 #define CENTER(width) ((ImGui::GetWindowSize().x - width) * 0.5f)
 #ifdef _DEBUG
@@ -53,7 +54,7 @@ void Menu::login(int& loggedIn)
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 10));
 	{
 		ImGui::SetCursorPosX(CENTER(image_size.x));
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 60));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 35));
 		{
 			if (my_texture) {
 				ImGui::Image((void*)my_texture, image_size);
@@ -91,6 +92,7 @@ void Menu::login(int& loggedIn)
 			}
 			ImGui::PopStyleVar();
 
+			static bool loginError = false;
 			ImGui::SetCursorPosX(CENTER(120));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
 			{
@@ -100,6 +102,15 @@ void Menu::login(int& loggedIn)
 				}
 			}
 			ImGui::PopStyleVar();
+
+			if (loginError) {
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(COLOUR(255.f), COLOUR(5.f), COLOUR(5.f), 1.f));
+				ImGui::PushFont(smallFont);
+				ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize("Invalid credentials").x));
+				ImGui::Text("Invalid credentials!");
+				ImGui::PopFont();
+				ImGui::PopStyleColor();
+			}
 		}
 		ImGui::PopStyleVar();
 	}
@@ -110,7 +121,7 @@ void Menu::cheats() {
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 10));
 	{
 		ImGui::SetCursorPosX(CENTER(image_size.x));
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 60));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 35));
 		{
 			if (my_texture) {
 				ImGui::Image((void*)my_texture, image_size);
@@ -143,14 +154,55 @@ void Menu::cheats() {
 
 void Menu::loading() {
 	ImGui::SetCursorPosX(CENTER(image_size.x));
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 60));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 35));
 	{
 		if (my_texture) {
 			ImGui::Image((void*)my_texture, image_size);
 		}
+
+		ImGui::SetCursorPosX(CENTER(45)-22.5f);
+		ImGui::LoadingIndicatorCircle("t", 45, ImVec4(COLOUR(5.0f), COLOUR(116.0f), COLOUR(203.0f), 1.f), ImVec4(COLOUR(30.0f), COLOUR(30.0f), COLOUR(30.0f), 1.f), 14, 7.0f);
+
+		ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(loadingType.c_str()).x));
+		ImGui::Text(loadingType.c_str());
 	}
 	ImGui::PopStyleVar();
+}
 
-	ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize("Loading...").x));
-	ImGui::Text("Loading...");
+void ImGui::LoadingIndicatorCircle(const char* label, const float indicator_radius,
+	const ImVec4& main_color, const ImVec4& backdrop_color,
+	const int circle_count, const float speed) {
+	ImGuiWindow* window = GetCurrentWindow();
+	if (window->SkipItems) {
+		return;
+	}
+
+	ImGuiContext& g = *GImGui;
+	const ImGuiID id = window->GetID(label);
+
+	const ImGuiStyle& style = g.Style;
+	const ImVec2 pos = window->DC.CursorPos;
+	const float circle_radius = indicator_radius / 10.0f;
+	const ImRect bb(pos, ImVec2(pos.x + indicator_radius * 2.0f,
+		pos.y + indicator_radius * 2.0f));
+	ItemSize(bb, style.FramePadding.y);
+	if (!ItemAdd(bb, id)) {
+		return;
+	}
+	const float t = g.Time;
+	const auto degree_offset = 2.0f * IM_PI / circle_count;
+	for (int i = 0; i < circle_count; ++i) {
+		const auto x = indicator_radius * std::sin(degree_offset * i);
+		const auto y = indicator_radius * std::cos(degree_offset * i);
+		const auto growth = max(0.0f, std::sin(t * speed - i * degree_offset));
+		ImVec4 color;
+		color.x = main_color.x * growth + backdrop_color.x * (1.0f - growth);
+		color.y = main_color.y * growth + backdrop_color.y * (1.0f - growth);
+		color.z = main_color.z * growth + backdrop_color.z * (1.0f - growth);
+		color.w = 1.0f;
+		window->DrawList->AddCircleFilled(ImVec2(pos.x + indicator_radius + x,
+			pos.y + indicator_radius - y),
+			circle_radius + growth * circle_radius,
+			GetColorU32(color));
+	}
 }

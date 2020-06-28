@@ -79,6 +79,7 @@ void createClient() {
     if(m_Client->sendrecieve("Test") == "Test")
          m_Menu->state = state::login;
     else {
+        m_Menu->loadingType = "Connection Issue Closing..";
         std::this_thread::sleep_for(2000ms);
         m_Menu->AppOpen = false;
     }
@@ -170,7 +171,7 @@ int main(int, char**)
 
     int my_image_width = 0;
     int my_image_height = 0;
-    bool ret = LoadTextureFromFile("C:\\Users\\joeyl\\Desktop\\Projects\\ZeroClient\\build\\testimg.png", &m_Menu->my_texture, &my_image_width, &my_image_height);
+    bool ret = LoadTextureFromFile("testimg.png", &m_Menu->my_texture, &my_image_width, &my_image_height);
     m_Menu->image_size = ImVec2(my_image_width, my_image_height);
     IM_ASSERT(ret);
 
