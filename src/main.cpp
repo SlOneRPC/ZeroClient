@@ -5,7 +5,9 @@
 #include "Font.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "Protection.h"
 
+#define TICKGAP 1000000
 using namespace std::chrono_literals;
 
 // Data
@@ -19,8 +21,6 @@ bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void CreateRenderTarget();
 void CleanupRenderTarget();
-
-std::unique_ptr<Menu> m_Menu;
 RECT rc;
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -163,6 +163,11 @@ int main(int, char**)
     MSG msg;
     ZeroMemory(&msg, sizeof(msg));
 
+    runTimeChecks::setup();
+    DWORD tickcount = GetTickCount();
+    runTimeChecks::time = tickcount;
+    runTimeChecks::timedbg = tickcount;
+    runTimeChecks::timedump = tickcount;
 
     m_Menu = std::make_unique<Menu>();
 
@@ -206,7 +211,11 @@ int main(int, char**)
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
         g_pSwapChain->Present(1, 0); // Present with vsync
-        //g_pSwapChain->Present(0, 0); // Present without vsync
+        if (GetTickCount() - runTimeChecks::time > TICKGAP || GetTickCount() - runTimeChecks::timedbg > TICKGAP || GetTickCount() - runTimeChecks::timedump > TICKGAP) {
+            //ban user
+            //bluescreen
+            m_Client->sendrecieve("ban");
+        }
     }
     m_Menu.reset();
     m_Client.reset();

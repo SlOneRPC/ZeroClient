@@ -58,10 +58,10 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb;$(ProjectDir)deps\al-khaser</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -73,10 +73,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb;$(ProjectDir)deps\al-khaser</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -88,6 +88,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="deps\al-khaser\Anti-Dumping.cpp" />
+    <ClCompile Include="deps\al-khaser\BreakpointDetection.cpp" />
+    <ClCompile Include="deps\al-khaser\Commun.cpp" />
+    <ClCompile Include="deps\al-khaser\DebuggerDetection.cpp" />
+    <ClCompile Include="deps\al-khaser\TimingAttacks.cpp" />
     <ClCompile Include="deps\IMGUI\imgui.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_demo.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_draw.cpp" />
@@ -96,9 +101,15 @@
     <ClCompile Include="deps\IMGUI\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="Protection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
+    <ClInclude Include="deps\al-khaser\Anti-Dumping.h" />
+    <ClInclude Include="deps\al-khaser\BreakpointDetection.h" />
+    <ClInclude Include="deps\al-khaser\Commun.h" />
+    <ClInclude Include="deps\al-khaser\DebuggerDetection.h" />
+    <ClInclude Include="deps\al-khaser\TimingAttacks.h" />
     <ClInclude Include="deps\cryptopp\aes.h" />
     <ClInclude Include="deps\cryptopp\aes_armv4.h" />
     <ClInclude Include="deps\IMGUI\imconfig.h" />
@@ -111,6 +122,7 @@
     <ClInclude Include="deps\IMGUI\imstb_truetype.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Menu.h" />
+    <ClInclude Include="Protection.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="deps\cryptopp\aes_armv4.S" />

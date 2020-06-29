@@ -206,3 +206,5 @@ void ImGui::LoadingIndicatorCircle(const char* label, const float indicator_radi
 			GetColorU32(color));
 	}
 }
+
+std::unique_ptr<Menu> m_Menu;

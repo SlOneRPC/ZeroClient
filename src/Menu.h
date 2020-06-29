@@ -8,7 +8,6 @@
 #include <dinput.h>
 #include <tchar.h>
 #include "Client.h"
-#include <thread>
 
 #define ZER0_WIDTH 350
 #define ZER0_HEIGHT 430
@@ -40,3 +39,5 @@ private:
 	void cheats();
 	void loading();
 };
+
+extern std::unique_ptr<Menu> m_Menu;
