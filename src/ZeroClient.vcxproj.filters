@@ -123,4 +123,7 @@
   <ItemGroup>
     <None Include="deps\cryptopp\aes_armv4.S" />
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="deps\tiny-AES\tiny-aes.lib" />
+  </ItemGroup>
 </Project>
