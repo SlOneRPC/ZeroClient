@@ -36,12 +36,10 @@ public:
 		, m_outputBlockSize(0), m_bytePos(0), m_bitPos(0)
 	{
 		Detach(attachment);
-		BaseN_Encoder::IsolatedInitialize(
-			MakeParameters
-				(Name::EncodingLookupArray(), alphabet)
-				(Name::Log2Base(), log2base)
-				(Name::Pad(), padding != -1)
-				(Name::PaddingByte(), byte(padding)));
+		IsolatedInitialize(MakeParameters(Name::EncodingLookupArray(), alphabet)
+			(Name::Log2Base(), log2base)
+			(Name::Pad(), padding != -1)
+			(Name::PaddingByte(), byte(padding)));
 	}
 
 	void IsolatedInitialize(const NameValuePairs &parameters);
@@ -80,10 +78,7 @@ public:
 		, m_outputBlockSize(0), m_bytePos(0), m_bitPos(0)
 	{
 		Detach(attachment);
-		BaseN_Decoder::IsolatedInitialize(
-			MakeParameters
-				(Name::DecodingLookupArray(), lookup)
-				(Name::Log2Base(), log2base));
+		IsolatedInitialize(MakeParameters(Name::DecodingLookupArray(), lookup)(Name::Log2Base(), log2base));
 	}
 
 	void IsolatedInitialize(const NameValuePairs &parameters);
@@ -126,11 +121,9 @@ public:
 		: m_groupSize(0), m_counter(0)
 	{
 		Detach(attachment);
-		Grouper::IsolatedInitialize(
-			MakeParameters
-				(Name::GroupSize(), groupSize)
-				(Name::Separator(), ConstByteArrayParameter(separator))
-				(Name::Terminator(), ConstByteArrayParameter(terminator)));
+		IsolatedInitialize(MakeParameters(Name::GroupSize(), groupSize)
+			(Name::Separator(), ConstByteArrayParameter(separator))
+			(Name::Terminator(), ConstByteArrayParameter(terminator)));
 	}
 
 	void IsolatedInitialize(const NameValuePairs &parameters);

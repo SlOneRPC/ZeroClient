@@ -26,20 +26,15 @@ CRYPTOPP_DLL_TEMPLATE_CLASS AbstractRing<Integer>;
 CRYPTOPP_DLL_TEMPLATE_CLASS AbstractEuclideanDomain<Integer>;
 
 /// \brief Ring of congruence classes modulo n
-/// \details This implementation represents each congruence class as
-///  the smallest non-negative integer in that class.
-/// \details <tt>const Element&</tt> returned by member functions are
-///  references to internal data members. Since each object may have
-///  only one such data member for holding results, you should use the
-///  class like this:
-///  <pre>    abcd = group.Add(a, group.Add(b, group.Add(c,d));</pre>
-///  The following code will produce <i>incorrect</i> results:
-///  <pre>    abcd = group.Add(group.Add(a,b), group.Add(c,d));</pre>
-/// \details If a ModularArithmetic() is copied or assigned the modulus
-///  is copied, but not the internal data members. The internal data
-///  members are undefined after copy or assignment.
-/// \sa <A HREF="https://cryptopp.com/wiki/Integer">Integer</A> on the
-///  Crypto++ wiki.
+/// \details This implementation represents each congruence class as the smallest
+///   non-negative integer in that class.
+/// \details <tt>const Element&</tt> returned by member functions are references
+///   to internal data members. Since each object may have only
+///   one such data member for holding results, the following code
+///   will produce incorrect results:
+///   <pre>    abcd = group.Add(group.Add(a,b), group.Add(c,d));</pre>
+///   But this should be fine:
+///   <pre>    abcd = group.Add(a, group.Add(b, group.Add(c,d));</pre>
 class CRYPTOPP_DLL ModularArithmetic : public AbstractRing<Integer>
 {
 public:
@@ -52,23 +47,12 @@ public:
 	/// \brief Construct a ModularArithmetic
 	/// \param modulus congruence class modulus
 	ModularArithmetic(const Integer &modulus = Integer::One())
-		: m_modulus(modulus), m_result(static_cast<word>(0), modulus.reg.size()) {}
+		: AbstractRing<Integer>(), m_modulus(modulus), m_result(static_cast<word>(0), modulus.reg.size()) {}
 
 	/// \brief Copy construct a ModularArithmetic
 	/// \param ma other ModularArithmetic
 	ModularArithmetic(const ModularArithmetic &ma)
-		: AbstractRing<Integer>(ma), m_modulus(ma.m_modulus), m_result(static_cast<word>(0), m_modulus.reg.size()) {}
-
-	/// \brief Assign a ModularArithmetic
-	/// \param ma other ModularArithmetic
-	ModularArithmetic& operator=(const ModularArithmetic &ma) {
-		if (this != &ma)
-		{
-			m_modulus = ma.m_modulus;
-			m_result = Integer(static_cast<word>(0), m_modulus.reg.size());
-		}
-		return *this;
-	}
+		: AbstractRing<Integer>(), m_modulus(ma.m_modulus), m_result(static_cast<word>(0), ma.m_modulus.reg.size()) {}
 
 	/// \brief Construct a ModularArithmetic
 	/// \param bt BER encoded ModularArithmetic
@@ -255,7 +239,7 @@ public:
 	/// \details RandomElement constructs a new element in the range <tt>[0,n-1]</tt>, inclusive.
 	///   The element's class must provide a constructor with the signature <tt>Element(RandomNumberGenerator rng,
 	///   Element min, Element max)</tt>.
-	Element RandomElement(RandomNumberGenerator &rng, const RandomizationParameter &ignore_for_now = 0) const
+	Element RandomElement(RandomNumberGenerator &rng , const RandomizationParameter &ignore_for_now = 0) const
 		// left RandomizationParameter arg as ref in case RandomizationParameter becomes a more complicated struct
 	{
 		CRYPTOPP_UNUSED(ignore_for_now);
@@ -269,12 +253,7 @@ public:
 	bool operator==(const ModularArithmetic &rhs) const
 		{return m_modulus == rhs.m_modulus;}
 
-	static const RandomizationParameter DefaultRandomizationParameter;
-
-private:
-	// TODO: Clang on OS X needs a real operator=.
-	// Squash warning on missing assignment operator.
-	// ModularArithmetic& operator=(const ModularArithmetic &ma);
+	static const RandomizationParameter DefaultRandomizationParameter ;
 
 protected:
 	Integer m_modulus;

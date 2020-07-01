@@ -61,7 +61,7 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb;$(ProjectDir)deps\al-khaser;$(ProjectDir)deps\tiny-AES</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb;$(ProjectDir)deps\al-khaser;$(ProjectDir)deps\cryptopp</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -76,7 +76,7 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb;$(ProjectDir)deps\al-khaser;$(ProjectDir)deps\tiny-AES</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)deps\IMGUI;$(ProjectDir)deps\stb;$(ProjectDir)deps\al-khaser;$(ProjectDir)deps\cryptopp</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -126,9 +126,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="deps\cryptopp\aes_armv4.S" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="deps\tiny-AES\tiny-aes.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

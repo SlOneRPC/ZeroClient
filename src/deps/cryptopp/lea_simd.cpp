@@ -12,7 +12,7 @@
 #include "misc.h"
 
 // Uncomment for benchmarking C++ against SSE or NEON.
-// Do so in both simon.cpp and simon_simd.cpp.
+// Do so in both simon.cpp and simon-simd.cpp.
 // #undef CRYPTOPP_SSSE3_AVAILABLE
 // #undef CRYPTOPP_ARM_NEON_AVAILABLE
 
@@ -24,9 +24,6 @@
 
 #if defined(__XOP__)
 # include <ammintrin.h>
-# if defined(__GNUC__)
-#  include <x86intrin.h>
-# endif
 #endif
 
 #if defined(__AVX512F__)
@@ -34,18 +31,17 @@
 # include <immintrin.h>
 #endif
 
-#if (CRYPTOPP_ARM_NEON_HEADER)
+// C1189: error: This header is specific to ARM targets
+#if (CRYPTOPP_ARM_NEON_AVAILABLE)
 # include "adv_simd.h"
-# include <arm_neon.h>
+# ifndef _M_ARM64
+#  include <arm_neon.h>
+# endif
 #endif
 
-#if (CRYPTOPP_ARM_ACLE_HEADER)
+#if (CRYPTOPP_ARM_ACLE_AVAILABLE)
 # include <stdint.h>
 # include <arm_acle.h>
-#endif
-
-#if defined(_M_ARM64)
-# include "adv_simd.h"
 #endif
 
 // Do not port this to POWER architecture. Naively we hoped
@@ -182,7 +178,7 @@ template <unsigned int IDX>
 inline uint32x4_t UnpackNEON(const uint32x4_t& a, const uint32x4_t& b, const uint32x4_t& c, const uint32x4_t& d)
 {
     // Should not be instantiated
-    CRYPTOPP_ASSERT(0);
+    CRYPTOPP_ASSERT(0);;
     return vmovq_n_u32(0);
 }
 
@@ -222,7 +218,7 @@ template <unsigned int IDX>
 inline uint32x4_t UnpackNEON(const uint32x4_t& v)
 {
     // Should not be instantiated
-    CRYPTOPP_ASSERT(0);
+    CRYPTOPP_ASSERT(0);;
     return vmovq_n_u32(0);
 }
 

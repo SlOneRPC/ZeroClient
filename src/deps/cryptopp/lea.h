@@ -82,7 +82,7 @@ public:
 #endif
     };
 
-    /// \brief Decryption transformation
+    /// \brief Encryption transformation
     /// \details Dec provides implementation for decryption transformation. All key and block
     ///   sizes are supported.
     /// \since Crypto++ 8.0

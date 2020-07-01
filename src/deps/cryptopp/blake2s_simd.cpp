@@ -1,4 +1,4 @@
-// blake2_simd.cpp - written and placed in the public domain by
+// blake2-simd.cpp - written and placed in the public domain by
 //                   Samuel Neves, Jeffrey Walton, Uri Blumenthal
 //                   and Marcel Raad.
 //
@@ -8,9 +8,9 @@
 //    appropriate instructions sets in some build configurations.
 
 // The BLAKE2b and BLAKE2s numbers are consistent with the BLAKE2 team's
-// numbers. However, we have an Altivec implementation of BLAKE2s,
-// and a POWER8 implementation of BLAKE2b (BLAKE2 team is missing them).
-// Altivec code is about 2x faster than C++ when using GCC 5.0 or
+// numbers. However, we have an Altivec/POWER7 implementation of BLAKE2s,
+// and a POWER8 implementation of BLAKE2b (BLAKE2 is missing them). The
+// Altivec/POWER7 code is about 2x faster than C++ when using GCC 5.0 or
 // above. The POWER8 code is about 2.5x faster than C++ when using GCC 5.0
 // or above. If you use GCC 4.0 (PowerMac) or GCC 4.8 (GCC Compile Farm)
 // then the PowerPC code will be slower than C++. Be sure to use GCC 5.0
@@ -23,7 +23,7 @@
 #include "blake2.h"
 
 // Uncomment for benchmarking C++ against SSE2 or NEON.
-// Do so in both blake2.cpp and blake2_simd.cpp.
+// Do so in both blake2.cpp and blake2-simd.cpp.
 // #undef CRYPTOPP_SSE41_AVAILABLE
 // #undef CRYPTOPP_ARM_NEON_AVAILABLE
 // #undef CRYPTOPP_ALTIVEC_AVAILABLE
@@ -39,14 +39,8 @@
 #if defined(__xlC__) && (__xlC__ < 0x0d01)
 # define CRYPTOPP_DISABLE_ALTIVEC 1
 # undef CRYPTOPP_POWER7_AVAILABLE
+# undef CRYPTOPP_POWER8_AVAILABLE
 # undef CRYPTOPP_ALTIVEC_AVAILABLE
-#endif
-
-#if defined(__XOP__)
-# include <ammintrin.h>
-# if defined(__GNUC__)
-#  include <x86intrin.h>
-# endif
 #endif
 
 #if (CRYPTOPP_SSE41_AVAILABLE)
@@ -55,11 +49,12 @@
 # include <smmintrin.h>
 #endif
 
-#if (CRYPTOPP_ARM_NEON_HEADER)
+// C1189: error: This header is specific to ARM targets
+#if (CRYPTOPP_ARM_NEON_AVAILABLE) && !defined(_M_ARM64)
 # include <arm_neon.h>
 #endif
 
-#if (CRYPTOPP_ARM_ACLE_HEADER)
+#if (CRYPTOPP_ARM_ACLE_AVAILABLE)
 # include <stdint.h>
 # include <arm_acle.h>
 #endif
@@ -697,40 +692,36 @@ void BLAKE2_Compress32_NEON(const byte* input, BLAKE2s_State& state)
 }
 #endif  // CRYPTOPP_ARM_NEON_AVAILABLE
 
-#if (CRYPTOPP_ALTIVEC_AVAILABLE)
+#if (CRYPTOPP_POWER8_AVAILABLE || CRYPTOPP_ALTIVEC_AVAILABLE)
 
-template <class T>
-inline uint32x4_p VecLoad32(const T* p)
+inline uint32x4_p VecLoad32(const void* p)
 {
-    return VecLoad(p);
+    return VecLoad((const word32*)p);
 }
 
-template <class T>
-inline uint32x4_p VecLoad32LE(const T* p)
+inline uint32x4_p VecLoad32LE(const void* p)
 {
 #if __BIG_ENDIAN__
     const uint8x16_p m = {3,2,1,0, 7,6,5,4, 11,10,9,8, 15,14,13,12};
-    const uint32x4_p v = VecLoad(p);
+    const uint32x4_p v = VecLoad((const word32*)p);
     return VecPermute(v, v, m);
 #else
-    return VecLoad(p);
+    return VecLoad((const word32*)p);
 #endif
 }
 
-template <class T>
-inline void VecStore32(T* p, const uint32x4_p x)
+inline void VecStore32(void* p, const uint32x4_p x)
 {
-    VecStore(x, p);
+    VecStore(x, (word32*)p);
 }
 
-template <class T>
-inline void VecStore32LE(T* p, const uint32x4_p x)
+inline void VecStore32LE(void* p, const uint32x4_p x)
 {
 #if __BIG_ENDIAN__
     const uint8x16_p m = {3,2,1,0, 7,6,5,4, 11,10,9,8, 15,14,13,12};
-    VecStore(VecPermute(x, x, m), p);
+    VecStore(VecPermute(x, x, m), (word32*)p);
 #else
-    VecStore(x, p);
+    VecStore(x, (word32*)p);
 #endif
 }
 
@@ -872,7 +863,12 @@ uint32x4_p VectorSet32<3,1,3,1>(const uint32x4_p a, const uint32x4_p b,
     return VecPermute(a, c, mask);
 }
 
-void BLAKE2_Compress32_ALTIVEC(const byte* input, BLAKE2s_State& state)
+// BLAKE2_Compress32_CORE will use either POWER7 or ALTIVEC,
+// depending on the flags used to compile this source file. The
+// abstractions are handled in VecLoad, VecStore and friends. In
+// the future we may to provide both POWER7 or ALTIVEC at the same
+// time to better support distros.
+void BLAKE2_Compress32_CORE(const byte* input, BLAKE2s_State& state)
 {
     # define m1 m0
     # define m2 m0
@@ -1019,6 +1015,22 @@ void BLAKE2_Compress32_ALTIVEC(const byte* input, BLAKE2s_State& state)
     VecStore32LE(state.h()+0, VecXor(ff0, VecXor(row1, row3)));
     VecStore32LE(state.h()+4, VecXor(ff1, VecXor(row2, row4)));
 }
-#endif  // CRYPTOPP_ALTIVEC_AVAILABLE
+#endif  // CRYPTOPP_POWER8_AVAILABLE || CRYPTOPP_ALTIVEC_AVAILABLE
+
+#if (CRYPTOPP_POWER8_AVAILABLE)
+
+void BLAKE2_Compress32_POWER8(const byte* input, BLAKE2s_State& state)
+{
+    BLAKE2_Compress32_CORE(input, state);
+}
+
+#elif (CRYPTOPP_ALTIVEC_AVAILABLE)
+
+void BLAKE2_Compress32_ALTIVEC(const byte* input, BLAKE2s_State& state)
+{
+    BLAKE2_Compress32_CORE(input, state);
+}
+
+#endif
 
 NAMESPACE_END

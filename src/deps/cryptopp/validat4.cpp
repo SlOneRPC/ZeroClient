@@ -47,8 +47,6 @@
 #include "cmac.h"
 #include "dmac.h"
 #include "hmac.h"
-#include "vmac.h"
-#include "ttmac.h"
 
 #include "drbg.h"
 
@@ -1558,7 +1556,7 @@ bool ValidateEncoder()
 	decoder.IsolatedInitialize(dparams);
 
 	decoder.Detach(new StringSink(str2));
-	decoder.Put(ConstBytePtr(str1), BytePtrSize(str1));
+	decoder.Put((const byte*) str1.data(), str1.size());
 	decoder.MessageEnd();
 
 	pass = (str1 == std::string(expected)) && pass;
@@ -1795,12 +1793,6 @@ bool ValidateGCM()
 	bool pass = RunTestDataFile("TestVectors/gcm.txt", MakeParameters(Name::TableSize(), (int)2048));
 	std::cout << "\n64K tables:";
 	return RunTestDataFile("TestVectors/gcm.txt", MakeParameters(Name::TableSize(), (int)64*1024)) && pass;
-}
-
-bool ValidateXTS()
-{
-	std::cout << "\nAES/XTS validation suite running...\n";
-	return RunTestDataFile("TestVectors/xts.txt");
 }
 
 bool ValidateCMAC()

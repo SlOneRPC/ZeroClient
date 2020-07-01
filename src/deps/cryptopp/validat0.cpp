@@ -1262,11 +1262,11 @@ struct ASN1_TestTuple
     }
 
     const byte* Data() const {
-        return ConstBytePtr(m_data);
+        return reinterpret_cast<const byte*>(&m_data[0]);
     }
 
     size_t Size() const {
-        return BytePtrSize(m_data);
+        return m_data.size();
     }
 
     int Tag() const {

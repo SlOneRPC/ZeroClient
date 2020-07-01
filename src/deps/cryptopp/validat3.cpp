@@ -170,7 +170,6 @@ bool ValidateAll(bool thorough)
 	pass=ValidateVMAC() && pass;
 	pass=ValidateCCM() && pass;
 	pass=ValidateGCM() && pass;
-	pass=ValidateXTS() && pass;
 	pass=ValidateCMAC() && pass;
 	pass=RunTestDataFile("TestVectors/eax.txt") && pass;
 
@@ -193,8 +192,6 @@ bool ValidateAll(bool thorough)
 	pass=ValidateRW() && pass;
 	pass=ValidateECP() && pass;
 	pass=ValidateEC2N() && pass;
-	pass=ValidateECP_Legacy_Encrypt() && pass;
-	pass=ValidateEC2N_Legacy_Encrypt() && pass;
 	pass=ValidateECDSA() && pass;
 	pass=ValidateECDSA_RFC6979() && pass;
 	pass=ValidateECGDSA(thorough) && pass;
@@ -221,8 +218,9 @@ bool TestSettings()
 	word32 w;
 	const byte s[] = "\x01\x02\x03\x04";
 
-#if (_MSC_VER >= 1400)
-	memcpy_s(&w, 4, s, 4);
+#if (_MSC_VER >= 1500)
+	std::copy(s, s+4,
+		stdext::make_checked_array_iterator(reinterpret_cast<byte*>(&w), sizeof(w)));
 #else
 	std::copy(s, s+4, reinterpret_cast<byte*>(&w));
 #endif
@@ -385,7 +383,7 @@ bool TestSettings()
 	bool hasSM3 = HasSM3();
 	bool hasSM4 = HasSM4();
 
-	std::cout << "passed:  hasASIMD == 1";
+	std::cout << "passed:  ";
 	std::cout << ", hasCRC32 == " << hasCRC32 << ", hasAES == " << hasAES;
 	std::cout << ", hasPMULL == " << hasPMULL << ", hasSHA1 == " << hasSHA1;
 	std::cout << ", hasSHA2 == " << hasSHA2 << ", hasSHA512 == " << hasSHA512;

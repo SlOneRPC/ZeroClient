@@ -113,7 +113,6 @@ CRYPTOPP_DLL bool CRYPTOPP_API VerifyPrime(RandomNumberGenerator &rng, const Int
 class CRYPTOPP_DLL PrimeSelector
 {
 public:
-	virtual ~PrimeSelector() {}
 	const PrimeSelector *GetSelectorPointer() const {return this;}
 	virtual bool IsAcceptable(const Integer &candidate) const =0;
 };
