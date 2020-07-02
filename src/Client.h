@@ -10,8 +10,9 @@ public:
 private:
 	int m_sock = 0;
 	bool reconnect();
-	const char* encrypy(const std::string& input);
-	const char* decrypt(const std::string& input);
+	std::string encrypy(const std::string& input);
+	std::string decrypt(const std::string& input);
+	bool connected = false;
 };
 
 extern std::unique_ptr<Client> m_Client;

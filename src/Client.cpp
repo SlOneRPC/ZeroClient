@@ -14,6 +14,7 @@
 #include "modes.h"
 #include "aes.h"
 #include "filters.h"
+#include "hex.h"
 #include <iomanip>
 #define PORT 8001
 
@@ -58,7 +59,7 @@ bool Client::reconnect() {
 	if (m_sock != INVALID_SOCKET) {
 		int connResult = connect(m_sock, (sockaddr*)&serv_addr, sizeof(serv_addr));
 		if (connResult == SOCKET_ERROR) {
-			DEBUGLOG("Cannot connect to the server!");
+			DEBUGLOG("Cannot connect to the server! Is the server open?");
 			closesocket(m_sock);
 			WSACleanup();
 		}
@@ -73,18 +74,17 @@ bool Client::reconnect() {
 }
 
 std::string Client::sendrecieve(std::string text) {
-
-	if (m_sock != INVALID_SOCKET) {
+	//we need to check if we got an inital connection to the server
+	if (m_sock != INVALID_SOCKET && connected) {
 		char buf[4024];
-		const char* encryptedString = encrypy(text);
-
-		int sendresult = send(m_sock, encryptedString, strlen(encryptedString) + 1, 0);
+		std::string encryptedString = encrypy(text);
+		int sendresult = send(m_sock, encryptedString.c_str(), encryptedString.size() + 1, 0);
 		if (sendresult != SOCKET_ERROR) {
 			ZeroMemory(buf, 4024);
 			int bytesRec = recv(m_sock, buf, 4024, 0);
 			if (bytesRec > 0) {
 				DEBUGLOG("SERVER : " << std::string(buf, 0, bytesRec));
-				return std::string(buf, 0, bytesRec);
+				return decrypt(std::string(buf, 0, bytesRec));
 			}
 		}
 		else if (reconnect()) {//sucessfully reconnected
@@ -97,44 +97,39 @@ std::string Client::sendrecieve(std::string text) {
 	return "";
 }
 
-const char * Client::encrypy(const std::string& input) {
-
-	/* tiny-aes example [MESSY AF] */
-
-	//struct AES_ctx ctx;
-	//uint8_t testkey[] = { 0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe, 0x2b, 0x73, 0xae, 0xf0, 0x85, 0x7d, 0x77, 0x81,
-	//				  0x1f, 0x35, 0x2c, 0x07, 0x3b, 0x61, 0x08, 0xd7, 0x2d, 0x98, 0x10, 0xa3, 0x09, 0x14, 0xdf, 0xf4 };
-	//uint8_t testiv[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-	//uint8_t in[]  = { "TEST           "};//has to be a multiple of 16 lol
-
-	//AES_init_ctx_iv(&ctx, testkey, testiv);
-	//AES_CBC_encrypt_buffer(&ctx, in, 16);
-
-	//DEBUGLOG(in);
-
-	/* cryptopp example [Bit Better] */
+std::string Client::encrypy(const std::string& input) {
+	/* Not using tiny-aes because cryptopp has auto padding */
 	using namespace CryptoPP;
 	
-	byte key[CryptoPP::AES::DEFAULT_KEYLENGTH], iv[CryptoPP::AES::BLOCKSIZE];
-	memset(key, 0x01, CryptoPP::AES::DEFAULT_KEYLENGTH);
-	memset(iv, 0x01, CryptoPP::AES::BLOCKSIZE);
+	byte key[AES::DEFAULT_KEYLENGTH], iv[AES::BLOCKSIZE];
+	memset(key, 0x01, AES::DEFAULT_KEYLENGTH);
+	memset(iv, 0x01, AES::BLOCKSIZE);
 	
 	std::string result;
 	
-	CryptoPP::AES::Encryption aesEncryption(key, CryptoPP::AES::DEFAULT_KEYLENGTH);
-	CryptoPP::CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
+	AES::Encryption aesEncryption(key, AES::DEFAULT_KEYLENGTH);
+	CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
 
-	CryptoPP::StreamTransformationFilter stfEncryptor(cbcEncryption, new CryptoPP::StringSink(result));
-	stfEncryptor.Put(reinterpret_cast<const unsigned char*>(input.c_str()), input.length());
-	stfEncryptor.MessageEnd();
+	//encrypt the string using PKCS padding
+	StringSource(input, true,
+		new StreamTransformationFilter(cbcEncryption, new StringSink(result),
+			StreamTransformationFilter::PKCS_PADDING));
 	
-	DEBUGLOG(result);
+	std::string encoded;
+	//convert the encrypted string to hex
+	StringSource(result, true,
+		new HexEncoder(
+			new StringSink(encoded)
+		) 
+	); 
 
-	return result.c_str();
+	DEBUGLOG("Encrypted Hex: " + encoded);
+
+	return encoded;
 }
 
 
-const char* Client::decrypt(const std::string& input) {
+std::string Client::decrypt(const std::string& input) {
 
 	using namespace CryptoPP;
 
@@ -144,14 +139,24 @@ const char* Client::decrypt(const std::string& input) {
 
 	AES::Decryption aesDecryption(key, CryptoPP::AES::DEFAULT_KEYLENGTH);
 	CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
-	std::string newResult;
-	StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(newResult));
-	stfDecryptor.Put(reinterpret_cast<const unsigned char*>(input.c_str()), input.length());
-	stfDecryptor.MessageEnd();
+	
+	std::string decoded;
+	//we need to decode the hex before decrypting
+	StringSource(input, true,
+		new HexDecoder(
+			new StringSink(decoded)
+		) 
+	); 
 
-	DEBUGLOG(newResult);
+	std::string result;
+	//decrypt the string with PKCS padding
+	StringSource(decoded, true,
+		new StreamTransformationFilter(cbcDecryption, new StringSink(result),
+			StreamTransformationFilter::PKCS_PADDING));
 
-	return newResult.c_str();
+	DEBUGLOG("Decryped String: " + result);
+
+	return result;
 }
 
 std::unique_ptr<Client> m_Client;
