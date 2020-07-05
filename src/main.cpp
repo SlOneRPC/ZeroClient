@@ -1,6 +1,6 @@
 // dear imgui - standalone example application for DirectX 11
 // If you are new to dear imgui, see examples/README.txt and documentation at the top of imgui.cpp.
-#include <iostream>
+#include "Common.h"
 #include "Menu.h"
 #include "Font.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -76,10 +76,10 @@ bool LoadTextureFromFile(const char* filename, ID3D11ShaderResourceView** out_sr
 
 void createClient() {
     m_Client = std::make_unique<Client>();
-    if(m_Client->sendrecieve("Test") == "Test")
+    if(m_Client->sendrecieve(_xor_("Test")) == _xor_("Test"))
          m_Menu->state = state::login;
     else {
-        m_Menu->loadingType = "Connection Issue Closing..";
+        m_Menu->loadingType = _xor_("Connection Issue Closing..");
         std::this_thread::sleep_for(2000ms);
         m_Menu->AppOpen = false;
     }
@@ -143,40 +143,28 @@ int main(int, char**)
     // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-      //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != NULL);
     ImFont* font = ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(Roboto_Regular_compressed_data, Roboto_Regular_compressed_size, 19);
     IM_ASSERT(font != NULL);
 
     // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Main loop
     MSG msg;
     ZeroMemory(&msg, sizeof(msg));
 
+    m_Menu = std::make_unique<Menu>();
+
     runTimeChecks::setup();
     DWORD tickcount = GetTickCount();
-    runTimeChecks::time = tickcount;
-    runTimeChecks::timedbg = tickcount;
-    runTimeChecks::timedump = tickcount;
-
-    m_Menu = std::make_unique<Menu>();
+    runTimeChecks::time = tickcount; runTimeChecks::timedbg = tickcount; runTimeChecks::timedump = tickcount;
 
     std::thread s(createClient);
     s.detach();
 
     int my_image_width = 0;
     int my_image_height = 0;
-    bool ret = LoadTextureFromFile("testimg.png", &m_Menu->my_texture, &my_image_width, &my_image_height);
+    bool ret = LoadTextureFromFile(_xor_("testimg.png").c_str(), &m_Menu->my_texture, &my_image_width, &my_image_height);
     m_Menu->image_size = ImVec2(my_image_width, my_image_height);
     IM_ASSERT(ret);
 
@@ -211,15 +199,17 @@ int main(int, char**)
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
         g_pSwapChain->Present(1, 0); // Present with vsync
+        
         if (GetTickCount() - runTimeChecks::time > TICKGAP || GetTickCount() - runTimeChecks::timedbg > TICKGAP || GetTickCount() - runTimeChecks::timedump > TICKGAP) {
             //ban user
             //bluescreen
             m_Client->sendrecieve("ban");
         }
     }
+    // Cleanup
     m_Menu.reset();
     m_Client.reset();
-    // Cleanup
+
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();

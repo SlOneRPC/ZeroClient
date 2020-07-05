@@ -6,7 +6,7 @@ public:
 	Client();
 	~Client();
 
-	std::string sendrecieve(std::string s);
+	std::string sendrecieve(const std::string& s);
 private:
 	int m_sock = 0;
 	bool reconnect();

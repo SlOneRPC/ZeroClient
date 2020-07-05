@@ -5,6 +5,7 @@
 #include "imgui_internal.h"
 #include <d3d11.h>
 #define DIRECTINPUT_VERSION 0x0800
+#include "XorStr.h"
 #include <dinput.h>
 #include <tchar.h>
 #include "Client.h"
@@ -30,7 +31,7 @@ public:
 	ImVec2 image_size;
 	ImFont* smallFont;
 	int state = state::loading;
-	std::string loadingType = "Loading..";
+	std::string loadingType = _xor_("Loading..");
 private:
 	char usernameBuf[120] = {};
 	char passwordBuf[120] = {};

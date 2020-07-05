@@ -82,12 +82,13 @@
       <SubSystem>NotSet</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="deps\al-khaser\Anti-Dumping.cpp" />
     <ClCompile Include="deps\al-khaser\BreakpointDetection.cpp" />
     <ClCompile Include="deps\al-khaser\Commun.cpp" />
@@ -102,9 +103,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Protection.cpp" />
+    <ClCompile Include="Protections\AntiDebug.cpp" />
+    <ClCompile Include="Protections\AntiDump.cpp" />
+    <ClCompile Include="Protections\AntiProcesses.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="deps\al-khaser\Anti-Dumping.h" />
     <ClInclude Include="deps\al-khaser\BreakpointDetection.h" />
     <ClInclude Include="deps\al-khaser\Commun.h" />
@@ -123,6 +128,7 @@
     <ClInclude Include="Font.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="Protection.h" />
+    <ClInclude Include="xorstr.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="deps\cryptopp\aes_armv4.S" />

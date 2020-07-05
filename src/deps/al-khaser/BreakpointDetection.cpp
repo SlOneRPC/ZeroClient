@@ -25,11 +25,11 @@ void Myfunction_Trap_Debugger()
 	int a=1;
 	int b=2;
 	int c=a+b;
-	printf ("I am the function that i'll trap your debugger, %d", c);
 }
 
 void Myfunction_Adresss_Next()
 { 
+    Myfunction_Trap_Debugger();
 };
 
 BOOL MemoryBreakpoints()

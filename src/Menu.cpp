@@ -9,6 +9,9 @@
 #define DEBUGLOG(msg)
 #endif 
 
+/*
+	Constructor for inital menu setup
+*/
 Menu::Menu() {
 	//setup colours
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -63,13 +66,13 @@ void Menu::login(int& loggedIn)
 		ImGui::PopStyleVar();
 
 		ImGui::SetCursorPosX(70);
-		ImGui::Text("Username: ");
+		ImGui::Text(_xor_("Username: ").c_str());
 
 		ImGui::SetCursorPosX(ImGui::GetWindowSize().x / 5);
 		ImGui::InputText("", usernameBuf, sizeof(usernameBuf));
 
 		ImGui::SetCursorPosX(70);
-		ImGui::Text("Password: ");
+		ImGui::Text(_xor_("Password: ").c_str());
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 20));
 		{
@@ -87,7 +90,7 @@ void Menu::login(int& loggedIn)
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1);
 			{
 				ImGui::PushFont(smallFont);
-				ImGui::Checkbox(" Remember Me", &rem);
+				ImGui::Checkbox(_xor_(" Remember Me").c_str(), &rem);
 				ImGui::PopFont();
 			}
 			ImGui::PopStyleVar();
@@ -96,7 +99,7 @@ void Menu::login(int& loggedIn)
 			ImGui::SetCursorPosX(CENTER(120));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
 			{
-				if (ImGui::Button("Login", ImVec2(120, 40))) {
+				if (ImGui::Button(_xor_("Login").c_str(), ImVec2(120, 40))) {
 					loggedIn = state::cheats;
 					DEBUGLOG("User logged in");
 				}
@@ -106,8 +109,8 @@ void Menu::login(int& loggedIn)
 			if (loginError) {
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(COLOUR(255.f), COLOUR(5.f), COLOUR(5.f), 1.f));
 				ImGui::PushFont(smallFont);
-				ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize("Invalid credentials").x));
-				ImGui::Text("Invalid credentials!");
+				ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(_xor_("Invalid credentials").c_str()).x));
+				ImGui::Text(_xor_("Invalid credentials").c_str());
 				ImGui::PopFont();
 				ImGui::PopStyleColor();
 			}
@@ -130,14 +133,14 @@ void Menu::cheats() {
 		ImGui::PopStyleVar();
 
 		static int currentCheat = 0;
-		const char* items[] = { "Grand Theft Auto 5" , "CSGO" };
+		const char* items[] = { _xor_("Grand Theft Auto 5").c_str() , _xor_("CSGO").c_str() };
 		ImGui::SetCursorPosX(68);
 		ImGui::ListBox("", &currentCheat, items, IM_ARRAYSIZE(items),5);
 
 		ImGui::SetCursorPosX(CENTER(120));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
 		{
-			if (ImGui::Button("Launch", ImVec2(120, 40))) {
+			if (ImGui::Button(_xor_("Launch").c_str(), ImVec2(120, 40))) {
 				//inject
 				DEBUGLOG("Inject..");
 			}
@@ -145,8 +148,8 @@ void Menu::cheats() {
 		ImGui::PopStyleVar();
 
 		ImGui::PushFont(smallFont);
-		ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize("Expires in 10 days").x));
-		ImGui::Text("Expires in 10 days");
+		ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(_xor_("Expires in 10 days").c_str()).x));
+		ImGui::Text(_xor_("Expires in 10 days").c_str());
 		ImGui::PopFont();
 	}
 	ImGui::PopStyleVar();

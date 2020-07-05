@@ -1,53 +1,58 @@
 #include "Client.h"
-#include <sys/types.h>
+#include "Common.h"
+
+//sock includes
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
-//#include "aes.hpp"
-//#pragma comment(lib,"deps/tiny-AES/tiny-aes.lib")
+
+//encryption includes
+#include "modes.h"
+#include "aes.h"
+#include "filters.h"
+#include "hex.h"
+#include <iomanip>
 #ifdef _DEBUG
 #pragma comment(lib,"deps/cryptopp/cryptlib.lib")
 #else
 #pragma comment(lib,"deps/cryptopp/cryptlibRel.lib")
 #endif // _DEBUG
 
-#include "modes.h"
-#include "aes.h"
-#include "filters.h"
-#include "hex.h"
-#include <iomanip>
+//server
 #define PORT 8001
+#define SERVERIP "127.0.0.1"
 
-#ifdef _DEBUG
-#define DEBUGLOG(msg) std::cout << msg << std::endl;   
-#else
-#define DEBUGLOG(msg)
-#endif 
 sockaddr_in serv_addr;
-
+/* 
+	Client constructor for setting up winsock and socket connection
+*/
 Client::Client() {
-	WSADATA data;
-	WORD ver = MAKEWORD(2, 2);
+	WSADATA data; WORD ver = MAKEWORD(2, 2); 
 	INT WSResult = WSAStartup(ver, &data);
+
 	if (WSResult != 0) {
 		DEBUGLOG("Cannot create winsock!");
 		return;
 	}
 
 	m_sock = socket(AF_INET, SOCK_STREAM,0);
+
 	if (m_sock == INVALID_SOCKET) {
 		DEBUGLOG("Cannot create socket!");
 		WSACleanup();
 		return;
 	}
+
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(PORT);
 
-	inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
-
-	reconnect();//open inital connection
+	inet_pton(AF_INET, _xor_(SERVERIP).c_str(), &serv_addr.sin_addr);
+	connected = reconnect();//open inital connection
 }
 
+/*
+	Socket destructor for cleanup
+*/
 Client::~Client() {
 	if (m_sock != INVALID_SOCKET) {
 		closesocket(m_sock);
@@ -55,6 +60,9 @@ Client::~Client() {
 	}
 }
 
+/*
+	Create a new socket connection
+*/
 bool Client::reconnect() {
 	if (m_sock != INVALID_SOCKET) {
 		int connResult = connect(m_sock, (sockaddr*)&serv_addr, sizeof(serv_addr));
@@ -73,7 +81,10 @@ bool Client::reconnect() {
 	return false;
 }
 
-std::string Client::sendrecieve(std::string text) {
+/*
+	Send a encrypted message and recieve a response through the socket
+*/
+std::string Client::sendrecieve(const std::string& text) {
 	//we need to check if we got an inital connection to the server
 	if (m_sock != INVALID_SOCKET && connected) {
 		char buf[4024];
@@ -97,13 +108,16 @@ std::string Client::sendrecieve(std::string text) {
 	return "";
 }
 
+/*
+	Encrypt socket message (hex format)
+*/
 std::string Client::encrypy(const std::string& input) {
 	/* Not using tiny-aes because cryptopp has auto padding */
 	using namespace CryptoPP;
 	
 	byte key[AES::DEFAULT_KEYLENGTH], iv[AES::BLOCKSIZE];
-	memset(key, 0x01, AES::DEFAULT_KEYLENGTH);
-	memset(iv, 0x01, AES::BLOCKSIZE);
+	memset(key, 0x00, AES::DEFAULT_KEYLENGTH);
+	memset(iv, 0x00, AES::BLOCKSIZE);
 	
 	std::string result;
 	
@@ -128,7 +142,9 @@ std::string Client::encrypy(const std::string& input) {
 	return encoded;
 }
 
-
+/*
+	Decrypt socket message (hex format)
+*/
 std::string Client::decrypt(const std::string& input) {
 
 	using namespace CryptoPP;
