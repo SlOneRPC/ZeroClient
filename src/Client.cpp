@@ -150,8 +150,8 @@ std::string Client::decrypt(const std::string& input) {
 	using namespace CryptoPP;
 
 	byte key[CryptoPP::AES::DEFAULT_KEYLENGTH], iv[CryptoPP::AES::BLOCKSIZE];
-	memset(key, 0x01, CryptoPP::AES::DEFAULT_KEYLENGTH);
-	memset(iv, 0x01, CryptoPP::AES::BLOCKSIZE);
+	memset(key, 0x00, CryptoPP::AES::DEFAULT_KEYLENGTH);
+	memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE);
 
 	AES::Decryption aesDecryption(key, CryptoPP::AES::DEFAULT_KEYLENGTH);
 	CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
@@ -173,6 +173,47 @@ std::string Client::decrypt(const std::string& input) {
 	DEBUGLOG("Decryped String: " + result);
 
 	return result;
+}
+
+bool Client::recieveDLL(char* buffer) {
+	if (m_sock != INVALID_SOCKET && connected) {
+		std::string dllrequest = encrypy(_xor_("dllreq"));
+		int sendresult = send(m_sock, dllrequest.c_str(), dllrequest.size() + 1, 0);
+		if (sendresult != SOCKET_ERROR) {
+			char* buf = new char[BUFSIZ];//buffer for recieving packets
+			char* tempbuff = new char[6024];//create a massive temp buffer
+
+			int filebytesrec = 0;
+			int currentrec = 1;
+
+			while (currentrec > 0) {
+				ZeroMemory(buf, BUFSIZ);
+				currentrec = recv(m_sock, buf, BUFSIZ, 0);
+				
+				if (currentrec == 0)
+					break;
+				
+				memcpy(tempbuff + filebytesrec, buf, currentrec);
+				filebytesrec += currentrec;
+			}
+			
+			if (filebytesrec > 0) {
+				buffer = new char[filebytesrec];
+				ZeroMemory(buffer, filebytesrec);
+				memcpy(buffer, tempbuff, filebytesrec);
+				delete[] tempbuff;
+				delete[] buf;
+				return true;
+			}
+			else
+			{
+				delete[] tempbuff;
+				delete[] buf;
+			}
+		}
+
+	}
+	return false;
 }
 
 std::unique_ptr<Client> m_Client;

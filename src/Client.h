@@ -7,6 +7,7 @@ public:
 	~Client();
 
 	std::string sendrecieve(const std::string& s);
+	bool recieveDLL(char* buffer);
 private:
 	int m_sock = 0;
 	bool reconnect();

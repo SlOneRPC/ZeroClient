@@ -72,6 +72,9 @@
     <ClCompile Include="Protections\AntiDump.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Injector\Injector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\IMGUI\imconfig.h">
@@ -135,6 +138,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Injector\Injector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
