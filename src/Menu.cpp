@@ -39,13 +39,13 @@ void Menu::mainMenu() {
 		ImGuiWindowFlags_NoScrollbar|
 		ImGuiWindowFlags_NoFocusOnAppearing))
 	{
-		if (state == 0) {
+		if (state == state::loading) {
 			loading();
 		}
-		else if (state == 1) {
+		else if (state == state::login) {
 			login(state);
 		}
-		else if (state == 2) {
+		else if (state == state::cheats) {
 			cheats();
 		}
 	}

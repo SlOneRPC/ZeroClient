@@ -13,6 +13,7 @@ private:
 	bool reconnect();
 	std::string encrypy(const std::string& input);
 	std::string decrypt(const std::string& input);
+	void setupEncryption();
 	bool connected = false;
 };
 

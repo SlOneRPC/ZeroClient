@@ -6,23 +6,27 @@
 #include <WS2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
 
-//encryption includes
-#include "modes.h"
-#include "aes.h"
-#include "filters.h"
-#include "hex.h"
-#include <iomanip>
-#ifdef _DEBUG
-#pragma comment(lib,"deps/cryptopp/cryptlib.lib")
-#else
-#pragma comment(lib,"deps/cryptopp/cryptlibRel.lib")
-#endif // _DEBUG
+#if 1
+	//encryption includes
+	#include "modes.h"
+	#include "aes.h"
+	#include "filters.h"
+	#include "hex.h"
+	#include "osrng.h"
+	#include <iomanip>
+	#ifdef _DEBUG
+	#pragma comment(lib,"deps/cryptopp/cryptlib.lib")
+	#else
+	#pragma comment(lib,"deps/cryptopp/cryptlibRel.lib")
+	#endif // _DEBUG
+	using namespace CryptoPP;
+#endif // 0
 
 //server
 #define PORT 8001
 #define SERVERIP "127.0.0.1"
-
 sockaddr_in serv_addr;
+byte key[AES::MAX_KEYLENGTH], iv[AES::BLOCKSIZE];
 /* 
 	Client constructor for setting up winsock and socket connection
 */
@@ -47,7 +51,8 @@ Client::Client() {
 	serv_addr.sin_port = htons(PORT);
 
 	inet_pton(AF_INET, _xor_(SERVERIP).c_str(), &serv_addr.sin_addr);
-	connected = reconnect();//open inital connection
+	connected = reconnect();//open inital socket connection to the server
+	setupEncryption();
 }
 
 /*
@@ -94,7 +99,6 @@ std::string Client::sendrecieve(const std::string& text) {
 			ZeroMemory(buf, 4024);
 			int bytesRec = recv(m_sock, buf, 4024, 0);
 			if (bytesRec > 0) {
-				DEBUGLOG("SERVER : " << std::string(buf, 0, bytesRec));
 				return decrypt(std::string(buf, 0, bytesRec));
 			}
 		}
@@ -109,36 +113,47 @@ std::string Client::sendrecieve(const std::string& text) {
 }
 
 /*
+	Setup encryption system, CBC 256 key and iv
+*/
+void Client::setupEncryption() {
+	//setup public key and iv for initial message
+	std::string ENC_KEY = _xor_("XSEZ1ZiXpwonxSLIbwyoOwBnJOX9mM1n"); // public key
+	std::string IV = _xor_("byOPz5oNOIGvk1bC"); // public iv
+	memcpy(key, ENC_KEY.data(), CryptoPP::AES::MAX_KEYLENGTH);
+	memcpy(iv, IV.data(), CryptoPP::AES::BLOCKSIZE);
+
+
+	std::string aesString = sendrecieve("Test");
+
+	memcpy(key, aesString.substr(0, aesString.find(":")).data(), CryptoPP::AES::MAX_KEYLENGTH);
+	memcpy(iv, aesString.substr(1, aesString.find(":")).data(), CryptoPP::AES::BLOCKSIZE);
+}
+
+/*
 	Encrypt socket message (hex format)
 */
 std::string Client::encrypy(const std::string& input) {
-	/* Not using tiny-aes because cryptopp has auto padding */
-	using namespace CryptoPP;
-	
-	byte key[AES::DEFAULT_KEYLENGTH], iv[AES::BLOCKSIZE];
-	memset(key, 0x00, AES::DEFAULT_KEYLENGTH);
-	memset(iv, 0x00, AES::BLOCKSIZE);
-	
+
 	std::string result;
-	
-	AES::Encryption aesEncryption(key, AES::DEFAULT_KEYLENGTH);
+
+	AES::Encryption aesEncryption(key, AES::MAX_KEYLENGTH);
 	CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
 
 	//encrypt the string using PKCS padding
 	StringSource(input, true,
 		new StreamTransformationFilter(cbcEncryption, new StringSink(result),
 			StreamTransformationFilter::PKCS_PADDING));
-	
+
 	std::string encoded;
-	//convert the encrypted string to hex
+
 	StringSource(result, true,
 		new HexEncoder(
 			new StringSink(encoded)
-		) 
-	); 
+		)
+	);
 
 	DEBUGLOG("Encrypted Hex: " + encoded);
-
+	
 	return encoded;
 }
 
@@ -147,13 +162,8 @@ std::string Client::encrypy(const std::string& input) {
 */
 std::string Client::decrypt(const std::string& input) {
 
-	using namespace CryptoPP;
 
-	byte key[CryptoPP::AES::DEFAULT_KEYLENGTH], iv[CryptoPP::AES::BLOCKSIZE];
-	memset(key, 0x00, CryptoPP::AES::DEFAULT_KEYLENGTH);
-	memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE);
-
-	AES::Decryption aesDecryption(key, CryptoPP::AES::DEFAULT_KEYLENGTH);
+	AES::Decryption aesDecryption(key, AES::MAX_KEYLENGTH);
 	CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
 	
 	std::string decoded;
@@ -170,7 +180,7 @@ std::string Client::decrypt(const std::string& input) {
 		new StreamTransformationFilter(cbcDecryption, new StringSink(result),
 			StreamTransformationFilter::PKCS_PADDING));
 
-	DEBUGLOG("Decryped String: " + result);
+	DEBUGLOG("Decryped returned string: " + result);
 
 	return result;
 }
