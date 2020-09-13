@@ -100,6 +100,7 @@
     <ClCompile Include="deps\IMGUI\imgui_impl_dx11.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_impl_win32.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_widgets.cpp" />
+    <ClCompile Include="HWInfo.cpp" />
     <ClCompile Include="Injector\Injector.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Menu.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="deps\IMGUI\imstb_textedit.h" />
     <ClInclude Include="deps\IMGUI\imstb_truetype.h" />
     <ClInclude Include="Font.h" />
+    <ClInclude Include="HWInfo.h" />
     <ClInclude Include="Injector\Injector.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="Protection.h" />

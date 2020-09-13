@@ -21,6 +21,7 @@
 	#endif // _DEBUG
 	using namespace CryptoPP;
 #endif // 0
+#include "HWInfo.h"
 
 //server
 #define PORT 8001
@@ -53,6 +54,8 @@ Client::Client() {
 	inet_pton(AF_INET, _xor_(SERVERIP).c_str(), &serv_addr.sin_addr);
 	connected = reconnect();//open inital socket connection to the server
 	setupEncryption();
+	sendrecieve(std::to_string(getHWinfo64()));
+	setup = true;
 }
 
 /*
@@ -93,7 +96,7 @@ std::string Client::sendrecieve(const std::string& text) {
 	//we need to check if we got an inital connection to the server
 	if (m_sock != INVALID_SOCKET && connected) {
 		char buf[4024];
-		std::string encryptedString = encrypy(text);
+		std::string encryptedString = encrypt(text);
 		int sendresult = send(m_sock, encryptedString.c_str(), encryptedString.size() + 1, 0);
 		if (sendresult != SOCKET_ERROR) {
 			ZeroMemory(buf, 4024);
@@ -111,7 +114,7 @@ std::string Client::sendrecieve(const std::string& text) {
 	}
 	return "";
 }
-
+int f = 0;
 /*
 	Setup encryption system, CBC 256 key and iv
 */
@@ -124,25 +127,26 @@ void Client::setupEncryption() {
 
 
 	std::string aesString = sendrecieve("Test");
-
-	memcpy(key, aesString.substr(0, aesString.find(":")).data(), CryptoPP::AES::MAX_KEYLENGTH);
-	memcpy(iv, aesString.substr(1, aesString.find(":")).data(), CryptoPP::AES::BLOCKSIZE);
+	memcpy(key, aesString.substr(0, aesString.find(";")).data(), CryptoPP::AES::MAX_KEYLENGTH);
+	memcpy(iv, aesString.substr(aesString.find(";") + 1).data(), CryptoPP::AES::BLOCKSIZE);
 }
 
 /*
 	Encrypt socket message (hex format)
 */
-std::string Client::encrypy(const std::string& input) {
+std::string Client::encrypt(const std::string& input) {
 
 	std::string result;
 
 	AES::Encryption aesEncryption(key, AES::MAX_KEYLENGTH);
 	CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
 
+
 	//encrypt the string using PKCS padding
 	StringSource(input, true,
 		new StreamTransformationFilter(cbcEncryption, new StringSink(result),
 			StreamTransformationFilter::PKCS_PADDING));
+
 
 	std::string encoded;
 
@@ -187,7 +191,7 @@ std::string Client::decrypt(const std::string& input) {
 
 bool Client::recieveDLL(char* buffer) {
 	if (m_sock != INVALID_SOCKET && connected) {
-		std::string dllrequest = encrypy(_xor_("dllreq"));
+		std::string dllrequest = encrypt(_xor_("dllreq"));
 		int sendresult = send(m_sock, dllrequest.c_str(), dllrequest.size() + 1, 0);
 		if (sendresult != SOCKET_ERROR) {
 			char* buf = new char[BUFSIZ];//buffer for recieving packets

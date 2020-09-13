@@ -18,7 +18,11 @@ myserver.listen(8001,() => {
           remoteAddress: connection.remoteAddress.split("::ffff:")[1],
 
           key: false,
-          iv: false
+          iv: false,
+
+          login: false,
+          username: false,
+          HWinfo: false
       }
 
       console.log(`Incoming connection from ${client.remoteAddress}`);
@@ -31,6 +35,10 @@ myserver.listen(8001,() => {
             incomingMessage = aesCBC.decrypt(data.toString(), client.key, client.iv);
           }
 
+          if(incomingMessage === "Ban"){
+              console.log(`Banned user`);
+              //close connection
+          }
 
           if(!client.handshaked){
             if(incomingMessage === "Test"){
@@ -41,8 +49,23 @@ myserver.listen(8001,() => {
               client.handshaked = true;
             }
           } else if(!client.authenticated) {
-
+              //TODO: check hwid is valid
+              client.HWinfo = incomingMessage;
+              console.log("Connection " + client.remoteAddress + " authenticated! With HWID - " + incomingMessage);
+              connection.write(aesCBC.encrypt("SUCCESS_AUTHENTICATION", client.key, client.iv));
+              client.authenticated = true;
+          } else if(!client.login){
+              var userpwd = incomingMessage.split(";");
+              //TODO: proper username/password checks
+              if(userpwd.length == 2 && userpwd[0] === "test" && userpwd[1] === "test"){
+                  connection.write(aesCBC.encrypt("SUCCESS_LOGIN", client.key, client.iv));
+                  client.login = true;
+              }
+              else{
+                connection.write(aesCBC.encrypt("FAILED_LOGIN", client.key, client.iv));
+              }
           }
+
     });
   })
 })

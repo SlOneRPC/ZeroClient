@@ -1,6 +1,7 @@
 #include "Menu.h"
 #include <iostream>
 #include <algorithm> 
+#include <thread>
 #define COLOUR(x) x/255 
 #define CENTER(width) ((ImGui::GetWindowSize().x - width) * 0.5f)
 #ifdef _DEBUG
@@ -95,13 +96,15 @@ void Menu::login(int& loggedIn)
 			}
 			ImGui::PopStyleVar();
 
-			static bool loginError = false;
 			ImGui::SetCursorPosX(CENTER(120));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
 			{
 				if (ImGui::Button(_xor_("Login").c_str(), ImVec2(120, 40))) {
-					loggedIn = state::cheats;
-					DEBUGLOG("User logged in");
+					loggedIn = state::loading;
+					
+					std::thread t = std::thread([this] {this->doLogin(); });
+					t.detach();
+				
 				}
 			}
 			ImGui::PopStyleVar();
@@ -209,5 +212,17 @@ void ImGui::LoadingIndicatorCircle(const char* label, const float indicator_radi
 			GetColorU32(color));
 	}
 }
+
+void Menu::doLogin() {
+	if (m_Client->sendrecieve(std::string(usernameBuf) + ";" + std::string(passwordBuf)) == _xor_("SUCCESS_LOGIN")) {
+		this->state = state::cheats;
+		DEBUGLOG("User logged in");
+	}
+	else {
+		this->loginError = true;
+		this->state = state::login;
+	}
+}
+
 
 std::unique_ptr<Menu> m_Menu;

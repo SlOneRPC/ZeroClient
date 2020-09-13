@@ -32,9 +32,11 @@ public:
 	ImFont* smallFont;
 	int state = state::loading;
 	std::string loadingType = _xor_("Loading..");
+	void doLogin();
 private:
 	char usernameBuf[120] = {};
 	char passwordBuf[120] = {};
+	bool loginError = false;
 
 	void login(int& login);
 	void cheats();

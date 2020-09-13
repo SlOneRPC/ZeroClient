@@ -76,6 +76,15 @@ bool LoadTextureFromFile(const char* filename, ID3D11ShaderResourceView** out_sr
 
 void createClient() {
     m_Client = std::make_unique<Client>();
+    if (m_Client->isSetup()) {
+        m_Menu->state = state::login;
+    }
+    else {
+        m_Menu->loadingType = _xor_("Connection Issue Closing..");
+        std::this_thread::sleep_for(2000ms);
+        m_Menu->AppOpen = false;
+    }
+       
 }
 
 // Main code
