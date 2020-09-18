@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-
+#include <string>
 namespace injector {
-	void MMInject();
+	void MMInject(std::string processName);
 }

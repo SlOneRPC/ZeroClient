@@ -105,7 +105,7 @@ int main(int, char**)
 
 #ifdef _DEBUG
     AllocConsole();
-    SetConsoleTitle(L"Client Debug");
+    SetConsoleTitle("Client Debug");
 
     // Create a handle and bind conout to STDOUT and STDERR.
     FILE* pCout;
@@ -205,7 +205,7 @@ int main(int, char**)
         if (GetTickCount() - runTimeChecks::time > TICKGAP || GetTickCount() - runTimeChecks::timedbg > TICKGAP || GetTickCount() - runTimeChecks::timedump > TICKGAP) {
             //ban user
             //bluescreen
-            m_Client->sendrecieve("ban");
+            //m_Client->sendrecieve("ban");
         }
     }
     // Cleanup

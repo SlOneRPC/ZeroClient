@@ -54,8 +54,8 @@ Client::Client() {
 	inet_pton(AF_INET, _xor_(SERVERIP).c_str(), &serv_addr.sin_addr);
 	connected = reconnect();//open inital socket connection to the server
 	setupEncryption();
-	sendrecieve(std::to_string(getHWinfo64()));
-	setup = true;
+	std::string auth = _xor_("SUCCESS_AUTHENTICATION");
+	setup = connected && sendrecieve(std::to_string(getHWinfo64())) == auth;
 }
 
 /*
@@ -189,13 +189,12 @@ std::string Client::decrypt(const std::string& input) {
 	return result;
 }
 
-bool Client::recieveDLL(char* buffer) {
+char* Client::recieveDLL(bool& gotDll) {
 	if (m_sock != INVALID_SOCKET && connected) {
-		std::string dllrequest = encrypt(_xor_("dllreq"));
-		int sendresult = send(m_sock, dllrequest.c_str(), dllrequest.size() + 1, 0);
-		if (sendresult != SOCKET_ERROR) {
-			char* buf = new char[BUFSIZ];//buffer for recieving packets
-			char* tempbuff = new char[6024];//create a massive temp buffer
+		std::string fileSize = sendrecieve(_xor_("REQUEST_DLL"));
+		if (fileSize != "") {
+			char* buf= new char[BUFSIZ];//buffer for recieving packets
+			char* tempbuff = new char[std::stoi(fileSize)];
 
 			int filebytesrec = 0;
 			int currentrec = 1;
@@ -209,15 +208,17 @@ bool Client::recieveDLL(char* buffer) {
 				
 				memcpy(tempbuff + filebytesrec, buf, currentrec);
 				filebytesrec += currentrec;
+				//delete[] buf;
 			}
 			
 			if (filebytesrec > 0) {
-				buffer = new char[filebytesrec];
+				char* buffer = new char[filebytesrec];
 				ZeroMemory(buffer, filebytesrec);
 				memcpy(buffer, tempbuff, filebytesrec);
 				delete[] tempbuff;
 				delete[] buf;
-				return true;
+				gotDll = true;
+				return buffer;
 			}
 			else
 			{
@@ -227,7 +228,8 @@ bool Client::recieveDLL(char* buffer) {
 		}
 
 	}
-	return false;
+	char* f;
+	return f;
 }
 
 std::unique_ptr<Client> m_Client;

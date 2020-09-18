@@ -13,7 +13,7 @@ void runTimeChecks::antiProcesses() {
 		return;
 #endif // _DEBUG
 
-	const std::wstring maliciousWindows[] =
+	const std::string maliciousWindows[] =
 	{ _xor_(_T("ollydbg.exe")),			// OllyDebug debugger
 		_xor_(_T("ProcessHacker.exe")),	    // Process Hacker
 		_xor_(_T("tcpview.exe")),			// Part of Sysinternals Suite
@@ -47,8 +47,8 @@ void runTimeChecks::antiProcesses() {
 		_xor_(_T("x32dbg.exe")),			//Part of x64dbg
 	};
 
-	for (std::wstring proc : maliciousWindows) {
-		if (GetProcessIdFromName(proc.c_str())) {
+	for (std::string proc : maliciousWindows) {
+		if (GetProcessIdFromName(proc)) {
 #ifdef _DEBUG //we only want this to run in debug mode
 			
 			DEBUGLOG("malicious program open! " << proc.c_str());

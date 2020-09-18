@@ -7,8 +7,8 @@ int CDECL MessageBoxPrintf (TCHAR * szCaption, TCHAR * szFormat, ...)
 	TCHAR szBuffer [1024] ;
 	va_list pArgList ;
 	va_start (pArgList, szFormat);
-	_vsnwprintf_s (szBuffer, sizeof (szBuffer) / sizeof (TCHAR),
-	szFormat, pArgList) ;
+	//_vsnwprintf_s (szBuffer, sizeof (szBuffer) / sizeof (TCHAR),
+	//szFormat, pArgList) ;
 	va_end (pArgList) ;
 	return MessageBox (NULL, szCaption , szBuffer,  MB_OK + MB_ICONERROR) ;
 }
@@ -28,57 +28,32 @@ BOOL IsWinVista () {
 
     return (major == 6) && (minor == 0);
 }
-
-DWORD GetProcessIdFromName(LPCTSTR ProcessName)
+DWORD GetProcessIdFromName(std::string ProcessName)
 {
-	PROCESSENTRY32 pe32;
-	HANDLE hSnapshot = NULL;
-	ZeroMemory(&pe32, sizeof(PROCESSENTRY32));
+	PROCESSENTRY32 processInfo;
+	processInfo.dwSize = sizeof(processInfo);
 
-	// We want a snapshot of processes
-	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-	// Check for a valid handle, in this case we need to check for
-	// INVALID_HANDLE_VALUE instead of NULL
-	if(hSnapshot == INVALID_HANDLE_VALUE)
+	HANDLE processSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+	if (processSnapshot == INVALID_HANDLE_VALUE)
 		return 0;
 
-	// Now we can enumerate the running process, also 
-	// we can't forget to set the PROCESSENTRY32.dwSize member
-	// otherwise the following functions will fail
-	pe32.dwSize =  sizeof(PROCESSENTRY32);
-	
-	if(Process32First(hSnapshot, &pe32) == FALSE)
+	Process32First(processSnapshot, &processInfo);
+	if (!ProcessName.compare(processInfo.szExeFile))
 	{
-		// Cleanup the mess
-		CloseHandle(hSnapshot);
-		return 0;
+		CloseHandle(processSnapshot);
+		return processInfo.th32ProcessID;
 	}
 
-	// Do our first comparison
-	if(_wcsicmp(pe32.szExeFile, ProcessName) == FALSE)
+	while (Process32Next(processSnapshot, &processInfo))
 	{
-		// Cleanup the mess
-		CloseHandle(hSnapshot);
-		return pe32.th32ProcessID;
-	}
-
-	// Most likely it won't match on the first try so 
-	// we loop through the rest of the entries until
-	// we find the matching entry or not one at all
-	while (Process32Next(hSnapshot, &pe32))
-	{
-		if(_wcsicmp(pe32.szExeFile, ProcessName) == 0)
+		if (!ProcessName.compare(processInfo.szExeFile))
 		{
-			// Cleanup the mess
-			CloseHandle(hSnapshot);
-			return pe32.th32ProcessID;
+			CloseHandle(processSnapshot);
+			return processInfo.th32ProcessID;
 		}
 	}
 
-	// If we made it this far there wasn't a match
-	// so we'll return 0
-	CloseHandle(hSnapshot);
+	CloseHandle(processSnapshot);
 	return 0;
 }
 
@@ -164,7 +139,7 @@ void BlockInputAPI()
 	// Need Admin Priviliege
 
     BlockInput(true);//block
-    MessageBox(NULL,L"You are blocked for 10 seconds.",L"AHAHAHA",MB_OK);
+    MessageBox(NULL,"You are blocked for 10 seconds.","AHAHAHA",MB_OK);
     Sleep(10000);//wait 10 sec
     BlockInput(false);//unblock
 }

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <algorithm> 
 #include <thread>
+#include "Injector/Injector.h"
+#include "Protection.h"
 #define COLOUR(x) x/255 
 #define CENTER(width) ((ImGui::GetWindowSize().x - width) * 0.5f)
 #ifdef _DEBUG
@@ -100,7 +102,7 @@ void Menu::login(int& loggedIn)
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
 			{
 				if (ImGui::Button(_xor_("Login").c_str(), ImVec2(120, 40))) {
-					loggedIn = state::loading;
+					state = state::loading;
 					
 					std::thread t = std::thread([this] {this->doLogin(); });
 					t.detach();
@@ -135,7 +137,6 @@ void Menu::cheats() {
 		}
 		ImGui::PopStyleVar();
 
-		static int currentCheat = 0;
 		const char* items[] = { _xor_("Grand Theft Auto 5").c_str() , _xor_("CSGO").c_str() };
 		ImGui::SetCursorPosX(68);
 		ImGui::ListBox("", &currentCheat, items, IM_ARRAYSIZE(items),5);
@@ -146,6 +147,9 @@ void Menu::cheats() {
 			if (ImGui::Button(_xor_("Launch").c_str(), ImVec2(120, 40))) {
 				//inject
 				DEBUGLOG("Inject..");
+				state = state::loading;
+				std::thread t = std::thread([this] { if(currentCheat == 1) injector::MMInject("csgo.exe"); });
+				t.detach();
 			}
 		}
 		ImGui::PopStyleVar();
@@ -214,7 +218,8 @@ void ImGui::LoadingIndicatorCircle(const char* label, const float indicator_radi
 }
 
 void Menu::doLogin() {
-	if (m_Client->sendrecieve(std::string(usernameBuf) + ";" + std::string(passwordBuf)) == _xor_("SUCCESS_LOGIN")) {
+	std::string login = _xor_("SUCCESS_LOGIN");
+	if (m_Client->sendrecieve(std::string(usernameBuf) + ";" + std::string(passwordBuf)) == login) {
 		this->state = state::cheats;
 		DEBUGLOG("User logged in");
 	}
@@ -222,7 +227,7 @@ void Menu::doLogin() {
 		this->loginError = true;
 		this->state = state::login;
 	}
+	//runTimeChecks::antiDump();
 }
-
 
 std::unique_ptr<Menu> m_Menu;

@@ -2,6 +2,7 @@ const net = require('net');
 const aesCBC = require('./crypto');
 const utils = require('./Utils');
 const crypto = require('crypto');
+const fs = require('fs');
 const ENC_KEY = "XSEZ1ZiXpwonxSLIbwyoOwBnJOX9mM1n" //public Key
 const IV = "byOPz5oNOIGvk1bC"; // public iv
 
@@ -64,6 +65,16 @@ myserver.listen(8001,() => {
               else{
                 connection.write(aesCBC.encrypt("FAILED_LOGIN", client.key, client.iv));
               }
+          }
+          else if(incomingMessage == "REQUEST_DLL"){
+            var stats = fs.statSync("cheat.dll")
+            connection.write(aesCBC.encrypt(stats["size"].toString(), client.key, client.iv));
+
+            const filestream =  fs.createReadStream("cheat.dll");
+            console.log("Sending DLL");
+
+            //connection.pipe(filestream);
+            filestream.pipe(connection);
           }
 
     });

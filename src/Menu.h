@@ -31,16 +31,15 @@ public:
 	ImVec2 image_size;
 	ImFont* smallFont;
 	int state = state::loading;
+	bool loginError = false;
 	std::string loadingType = _xor_("Loading..");
 	void doLogin();
 private:
+	int currentCheat = 0;
 	char usernameBuf[120] = {};
 	char passwordBuf[120] = {};
-	bool loginError = false;
-
 	void login(int& login);
 	void cheats();
 	void loading();
 };
-
 extern std::unique_ptr<Menu> m_Menu;

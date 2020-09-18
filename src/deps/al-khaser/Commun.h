@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <TlHelp32.h>
-
+#include <string>
 
 /************************** Defines & Structures ****************************/
 #define DEBUG_READ_EVENT 0x0001
@@ -72,7 +72,7 @@ BOOL IsWinXP_2K ();
 
 BOOL IsWinVista ();
 
-extern inline DWORD GetProcessIdFromName(LPCTSTR);
+extern inline DWORD GetProcessIdFromName(std::string s);
 
 extern inline DWORD GetCsrssProcessId();
 
