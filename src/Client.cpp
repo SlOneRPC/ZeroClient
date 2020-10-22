@@ -13,6 +13,7 @@
 	#include "filters.h"
 	#include "hex.h"
 	#include "osrng.h"
+	#include "files.h"
 	#include <iomanip>
 	#ifdef _DEBUG
 	#pragma comment(lib,"deps/cryptopp/cryptlib.lib")
@@ -126,7 +127,7 @@ void Client::setupEncryption() {
 	memcpy(iv, IV.data(), CryptoPP::AES::BLOCKSIZE);
 
 
-	std::string aesString = sendrecieve("Test");
+	std::string aesString = sendrecieve(_xor_("Test"));
 	memcpy(key, aesString.substr(0, aesString.find(";")).data(), CryptoPP::AES::MAX_KEYLENGTH);
 	memcpy(iv, aesString.substr(aesString.find(";") + 1).data(), CryptoPP::AES::BLOCKSIZE);
 }
@@ -166,7 +167,6 @@ std::string Client::encrypt(const std::string& input) {
 */
 std::string Client::decrypt(const std::string& input) {
 
-
 	AES::Decryption aesDecryption(key, AES::MAX_KEYLENGTH);
 	CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
 	
@@ -184,12 +184,34 @@ std::string Client::decrypt(const std::string& input) {
 		new StreamTransformationFilter(cbcDecryption, new StringSink(result),
 			StreamTransformationFilter::PKCS_PADDING));
 
-	DEBUGLOG("Decryped returned string: " + result);
+	if(result.size() < 40)
+		DEBUGLOG("Decryped returned string: " + result);
 
 	return result;
 }
 
-char* Client::recieveDLL(bool& gotDll) {
+/*
+	Decrypt a char array buffer (hex format)
+*/
+char* Client::decyptBuffer(char* buffer, int length)
+{
+	std::string ss(buffer, length);
+	std::string decryptedString = decrypt(ss);
+	ss.clear();
+
+	char* finalBuffer = new char[decryptedString.size()];
+	std::copy(decryptedString.begin(), decryptedString.end(), finalBuffer);
+	
+	decryptedString.clear();
+	delete[] buffer;
+	return finalBuffer;
+}
+
+/*
+	Recieve an encrypted DLL through the socket 
+	and decrypt with AES CBC
+*/
+char* Client::recieveDLL() {
 	if (m_sock != INVALID_SOCKET && connected) {
 		std::string fileSize = sendrecieve(_xor_("REQUEST_DLL"));
 		if (fileSize != "") {
@@ -208,7 +230,6 @@ char* Client::recieveDLL(bool& gotDll) {
 				
 				memcpy(tempbuff + filebytesrec, buf, currentrec);
 				filebytesrec += currentrec;
-				//delete[] buf;
 			}
 			
 			if (filebytesrec > 0) {
@@ -217,8 +238,8 @@ char* Client::recieveDLL(bool& gotDll) {
 				memcpy(buffer, tempbuff, filebytesrec);
 				delete[] tempbuff;
 				delete[] buf;
-				gotDll = true;
-				return buffer;
+
+				return decyptBuffer(buffer, filebytesrec);
 			}
 			else
 			{
@@ -228,8 +249,7 @@ char* Client::recieveDLL(bool& gotDll) {
 		}
 
 	}
-	char* f;
-	return f;
+	return nullptr;
 }
 
 std::unique_ptr<Client> m_Client;

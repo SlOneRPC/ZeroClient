@@ -202,7 +202,7 @@ int main(int, char**)
 
         g_pSwapChain->Present(1, 0); // Present with vsync
         
-        if (GetTickCount() - runTimeChecks::time > TICKGAP || GetTickCount() - runTimeChecks::timedbg > TICKGAP || GetTickCount() - runTimeChecks::timedump > TICKGAP) {
+        if (GetTickCount() - runTimeChecks::time > TICKGAP || GetTickCount() - runTimeChecks::timedbg > TICKGAP) {
             //ban user
             //bluescreen
             //m_Client->sendrecieve("ban");

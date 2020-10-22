@@ -1,4 +1,4 @@
-#include "Injector.h"
+#include "ManualMapInjector.h"
 #include <iostream>
 #include <fstream>
 #include "../Common.h"
@@ -146,17 +146,20 @@ void injector::MMInject(std::string processName) {
 
 	DWORD ProcessId = GetProcessIdFromName(processName);
 	if (ProcessId < 1) {
-		m_Menu->loadingType = "Waiting for game..";
+		m_Menu->loadingType = _xor_("Waiting for the game..");
 		while (ProcessId < 1) {
 			ProcessId = GetProcessIdFromName(processName);
 			Sleep(1000);
 		}
+		Sleep(12000);
 	}
 
-	bool passed = false;
-	char* enDllData = m_Client->recieveDLL(passed);
-	if (!passed) {
+	char* enDllData = m_Client->recieveDLL();
+	if (!enDllData) {
 		DEBUGLOG("Could't recieve dll!");
+		m_Menu->loadingType = _xor_("Error 101 ..");
+		Sleep(2000);
+		m_Menu->AppOpen = false;
 		return;
 	}
 
@@ -220,9 +223,9 @@ void injector::MMInject(std::string processName) {
 	
 	runTimeChecks::antiDump();
 	
-	m_Menu->loadingType = "Injection success!";
+	m_Menu->loadingType = _xor_("Injection success!");
 	Sleep(2000);
-	m_Menu->loadingType = "Closing...";
+	m_Menu->loadingType = _xor_("Closing...");
 	Sleep(1000);
 	m_Menu->AppOpen = false;
 }

@@ -18,7 +18,7 @@ void runTimeChecks::setup() {
 	Main protection run loop (run on a seperate thread)
 */
 void runTimeChecks::runLoop() {
-	while (m_Menu->AppOpen) {
+	while (m_Menu) {
 		time = GetTickCount();//store tickcount to measure the time it takes for the function to finish
         antiProcesses();
 		std::this_thread::sleep_for(300ms);//sleep to reduce cpu usage

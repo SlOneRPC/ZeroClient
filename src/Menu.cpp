@@ -2,7 +2,7 @@
 #include <iostream>
 #include <algorithm> 
 #include <thread>
-#include "Injector/Injector.h"
+#include "Injector/ManualMapInjector.h"
 #include "Protection.h"
 #define COLOUR(x) x/255 
 #define CENTER(width) ((ImGui::GetWindowSize().x - width) * 0.5f)
@@ -97,7 +97,6 @@ void Menu::login(int& loggedIn)
 				ImGui::PopFont();
 			}
 			ImGui::PopStyleVar();
-
 			ImGui::SetCursorPosX(CENTER(120));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
 			{
@@ -114,8 +113,8 @@ void Menu::login(int& loggedIn)
 			if (loginError) {
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(COLOUR(255.f), COLOUR(5.f), COLOUR(5.f), 1.f));
 				ImGui::PushFont(smallFont);
-				ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(_xor_("Invalid credentials").c_str()).x));
-				ImGui::Text(_xor_("Invalid credentials").c_str());
+				ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(errormsg.c_str()).x));
+				ImGui::Text(errormsg.c_str());
 				ImGui::PopFont();
 				ImGui::PopStyleColor();
 			}
@@ -137,27 +136,64 @@ void Menu::cheats() {
 		}
 		ImGui::PopStyleVar();
 
-		const char* items[] = { _xor_("Grand Theft Auto 5").c_str() , _xor_("CSGO").c_str() };
+		ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(_xor_("Your subscriptions:").c_str()).x));
+		ImGui::Text(_xor_("Your subscriptions:").c_str());
+		
 		ImGui::SetCursorPosX(68);
-		ImGui::ListBox("", &currentCheat, items, IM_ARRAYSIZE(items),5);
 
-		ImGui::SetCursorPosX(CENTER(120));
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
+
+		static bool hasSubscription = false;
+		if (ImGui::ListBoxHeader(_xor_("##subs").c_str(), subscriptions.size(),5))
 		{
-			if (ImGui::Button(_xor_("Launch").c_str(), ImVec2(120, 40))) {
-				//inject
-				DEBUGLOG("Inject..");
-				state = state::loading;
-				std::thread t = std::thread([this] { if(currentCheat == 1) injector::MMInject("csgo.exe"); });
-				t.detach();
+			if (subscriptions.size() > 0) {
+				for (size_t i = 0; i < subscriptions.size(); i++)
+				{
+					if (ImGui::Selectable(subscriptions.at(i).name.c_str(), currentCheat == i)) {
+						currentCheat = i;
+					}
+				}
+				hasSubscription = true;
 			}
+			else {
+				ImGui::Selectable(_xor_("No Subscriptions").c_str(), currentCheat == 0);
+				hasSubscription = false;
+			}
+			ImGui::ListBoxFooter();
 		}
-		ImGui::PopStyleVar();
 
-		ImGui::PushFont(smallFont);
-		ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(_xor_("Expires in 10 days").c_str()).x));
-		ImGui::Text(_xor_("Expires in 10 days").c_str());
-		ImGui::PopFont();
+		if (hasSubscription) {
+			ImGui::SetCursorPosX(CENTER(120));
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
+			{
+				if (ImGui::Button(_xor_("Launch").c_str(), ImVec2(120, 40))) {
+					//inject
+					DEBUGLOG("Inject..");
+					state = state::loading;
+					std::thread t = std::thread([this] {
+						if (this->subscriptions.at(currentCheat).name == "CSGO") injector::MMInject("csgo.exe");
+						else if (this->subscriptions.at(currentCheat).name == "Grand Theft Auto 5") injector::MMInject("gta5.exe");
+						});
+					t.detach();
+				}
+			}
+			ImGui::PopStyleVar();
+
+			ImGui::PushFont(smallFont);
+			ImGui::SetCursorPosX(CENTER(ImGui::CalcTextSize(_xor_("Expires in 10 days").c_str()).x));
+			static std::string e1 = _xor_("Expires in ");  static std::string e2 = _xor_(" days");
+			ImGui::Text((e1 + this->subscriptions.at(currentCheat).lenght + e2).c_str());
+			ImGui::PopFont();
+		}
+		else {
+			ImGui::SetCursorPosX(CENTER(120));
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15);
+			{
+				if (ImGui::Button(_xor_("Store").c_str(), ImVec2(120, 40))) {
+					//TODO setup purchase link on click
+				}
+			}
+			ImGui::PopStyleVar();
+		}
 	}
 	ImGui::PopStyleVar();
 }
@@ -219,15 +255,28 @@ void ImGui::LoadingIndicatorCircle(const char* label, const float indicator_radi
 
 void Menu::doLogin() {
 	std::string login = _xor_("SUCCESS_LOGIN");
-	if (m_Client->sendrecieve(std::string(usernameBuf) + ";" + std::string(passwordBuf)) == login) {
+	std::string result = m_Client->sendrecieve(std::string(usernameBuf) + ";" + std::string(passwordBuf));
+	if (result == login) {
+		std::string usersubscriptions = m_Client->sendrecieve(_xor_("REQUEST_SUBS"));
+		this->subscriptions.clear();
+		std::stringstream ss(usersubscriptions); std::string token;
+		while (std::getline(ss, token, '|')) {
+			std::stringstream ss2(token); std::string token2;
+			subscription sub;
+
+			std::getline(ss2, sub.name, ',');
+			std::getline(ss2, sub.lenght, ',');
+
+			this->subscriptions.push_back(sub);
+		}
 		this->state = state::cheats;
 		DEBUGLOG("User logged in");
 	}
 	else {
 		this->loginError = true;
 		this->state = state::login;
+		this->errormsg = result;
 	}
-	//runTimeChecks::antiDump();
 }
 
 std::unique_ptr<Menu> m_Menu;

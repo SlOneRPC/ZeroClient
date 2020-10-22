@@ -2,7 +2,9 @@ const net = require('net');
 const aesCBC = require('./crypto');
 const utils = require('./Utils');
 const crypto = require('crypto');
+const dbrequest = require('./queries');
 const fs = require('fs');
+var stream = require('stream');
 const ENC_KEY = "XSEZ1ZiXpwonxSLIbwyoOwBnJOX9mM1n" //public Key
 const IV = "byOPz5oNOIGvk1bC"; // public iv
 
@@ -13,17 +15,22 @@ myserver.listen(8001,() => {
 
     myserver.on('connection', (connection)=> {
       var client = {
-          alive: true,
           handshaked: false,
           authenticated: false,
           remoteAddress: connection.remoteAddress.split("::ffff:")[1],
 
+          login: false,
+          username: false,
+          HWinfo: false,
+
           key: false,
           iv: false,
 
-          login: false,
-          username: false,
-          HWinfo: false
+          csgo: false,
+          gta5: false,
+
+          csgoLength: 0,
+          gtaLength: 0
       }
 
       console.log(`Incoming connection from ${client.remoteAddress}`);
@@ -31,14 +38,15 @@ myserver.listen(8001,() => {
       connection.on('data', function(data){
           var incomingMessage = "";
           if(!client.handshaked){
-            incomingMessage = aesCBC.decrypt(data.toString(), ENC_KEY, IV);
+            incomingMessage = aesCBC.decrypt(data.toString(), ENC_KEY, IV); //use public key and iv
           } else {
-            incomingMessage = aesCBC.decrypt(data.toString(), client.key, client.iv);
+            incomingMessage = aesCBC.decrypt(data.toString(), client.key, client.iv); //use client key and iv
           }
 
           if(incomingMessage === "Ban"){
               console.log(`Banned user`);
-              //close connection
+              //TODO write to db
+              //TODO close connection
           }
 
           if(!client.handshaked){
@@ -50,33 +58,71 @@ myserver.listen(8001,() => {
               client.handshaked = true;
             }
           } else if(!client.authenticated) {
-              //TODO: check hwid is valid
               client.HWinfo = incomingMessage;
-              console.log("Connection " + client.remoteAddress + " authenticated! With HWID - " + incomingMessage);
-              connection.write(aesCBC.encrypt("SUCCESS_AUTHENTICATION", client.key, client.iv));
-              client.authenticated = true;
+
+              dbrequest.AuthenticateUnknown(client.HWinfo).then(result=>{
+                connection.write(aesCBC.encrypt("SUCCESS_AUTHENTICATION", client.key, client.iv));
+                client.authenticated = true;
+                if(result != false){
+                  client.username = result;
+                  console.log("User " + client.username + " authenticated! With HWID - " + incomingMessage);
+                }
+                else{
+                  console.log("Connection " + client.remoteAddress + " authenticated! With HWID - " + incomingMessage);
+                }
+              }).catch(err => {
+                    connection.write(aesCBC.encrypt("REJECTED_AUTHENTICATION", client.key, client.iv));
+              });
+
           } else if(!client.login){
               var userpwd = incomingMessage.split(";");
-              //TODO: proper username/password checks
-              if(userpwd.length == 2 && userpwd[0] === "test" && userpwd[1] === "test"){
-                  connection.write(aesCBC.encrypt("SUCCESS_LOGIN", client.key, client.iv));
-                  client.login = true;
+              if(userpwd.length>1){
+                  dbrequest.AuthenticateMember(userpwd[0], userpwd[1], client.HWinfo).then(result=>{
+                    connection.write(aesCBC.encrypt("SUCCESS_LOGIN", client.key, client.iv));
+                    client.login = true;
+                    client.username = userpwd[0];
+                  }).catch(err => {
+                        connection.write(aesCBC.encrypt(err, client.key, client.iv));
+                  });
+            } else {
+              connection.write(aesCBC.encrypt("Missing value", client.key, client.iv));
+            }
+          } else if(incomingMessage == "REQUEST_SUBS"){
+            var output = "";
+            dbrequest.CheckSubscription(client.username, 0).then(result=>{
+              if(result.active){
+                  client.csgo = true;
+                  output="CSGO," + result.daysRemaining;
+                  client.csgoLength = result.daysRemaining;
               }
-              else{
-                connection.write(aesCBC.encrypt("FAILED_LOGIN", client.key, client.iv));
-              }
+              dbrequest.CheckSubscription(client.username, 1).then(result=>{
+                if(result.active){
+                  client.gta5 = true;
+                  output+="|Grand Theft Auto 5,"+result.daysRemaining;
+                  client.gtaLength = result.daysRemaining;
+                }
+                connection.write(aesCBC.encrypt(output, client.key, client.iv));
+              });
+            });
+          } else if(incomingMessage == "REQUEST_DLL"){
+            if(client.csgo){
+              const filestream = fs.readFileSync("cheat.dll");
+              const encryptedDLL = aesCBC.encryptFile(filestream, client.key, client.iv);
+
+              //write dll size in bytes to the socket
+              connection.write(aesCBC.encrypt(Buffer.byteLength(encryptedDLL).toString(), client.key, client.iv));
+
+              console.log("Sending CSGO DLL to " + client.username);
+              var bufferStream = new stream.PassThrough();
+              bufferStream.end( encryptedDLL );
+              //send the dll
+              bufferStream.pipe(connection);
+            }
           }
-          else if(incomingMessage == "REQUEST_DLL"){
-            var stats = fs.statSync("cheat.dll")
-            connection.write(aesCBC.encrypt(stats["size"].toString(), client.key, client.iv));
 
-            const filestream =  fs.createReadStream("cheat.dll");
-            console.log("Sending DLL");
-
-            //connection.pipe(filestream);
-            filestream.pipe(connection);
-          }
-
+    });
+    connection.on('error', function(msg){
+        console.log("A connection closed unexpectly!");
     });
   })
 })

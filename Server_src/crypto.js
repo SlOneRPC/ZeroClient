@@ -1,6 +1,4 @@
 const crypto = require('crypto');
-const fs = require('fs');
-
 var encrypt = ((val,key,iv) => {
   let cipher = crypto.createCipheriv('aes-256-CBC',  Buffer.from(key), Buffer.from(iv));
   let encrypted = cipher.update(val);
@@ -17,15 +15,15 @@ var decrypt = ((encrypted,key,iv) => {
   return decrypted.toString();
 });
 
-var encryptFile = ((file,key,iv) => {
-    const readStream = fs.createReadStream('./cheat.dll');
+var encryptFile = ((file, key, iv) => {
+    let cipher = crypto.createCipheriv('aes-256-CBC',  Buffer.from(key), Buffer.from(iv));
+    const fileBuffer = Buffer.concat([cipher.update(file) , cipher.final()]);
 
+    return fileBuffer.toString('hex');
 });
-
-
-
 
 module.exports = {
     encrypt: encrypt,
-    decrypt: decrypt
+    decrypt: decrypt,
+    encryptFile: encryptFile
 }

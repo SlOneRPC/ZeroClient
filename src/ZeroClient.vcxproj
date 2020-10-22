@@ -94,6 +94,7 @@
     <ClCompile Include="deps\al-khaser\Commun.cpp" />
     <ClCompile Include="deps\al-khaser\DebuggerDetection.cpp" />
     <ClCompile Include="deps\al-khaser\TimingAttacks.cpp" />
+    <ClCompile Include="deps\cryptopp\files.cpp" />
     <ClCompile Include="deps\IMGUI\imgui.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_demo.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_draw.cpp" />
@@ -101,7 +102,7 @@
     <ClCompile Include="deps\IMGUI\imgui_impl_win32.cpp" />
     <ClCompile Include="deps\IMGUI\imgui_widgets.cpp" />
     <ClCompile Include="HWInfo.cpp" />
-    <ClCompile Include="Injector\Injector.cpp" />
+    <ClCompile Include="Injector\ManualMapInjector.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Protection.cpp" />
@@ -119,6 +120,7 @@
     <ClInclude Include="deps\al-khaser\TimingAttacks.h" />
     <ClInclude Include="deps\cryptopp\aes.h" />
     <ClInclude Include="deps\cryptopp\aes_armv4.h" />
+    <ClInclude Include="deps\cryptopp\files.h" />
     <ClInclude Include="deps\IMGUI\imconfig.h" />
     <ClInclude Include="deps\IMGUI\imgui.h" />
     <ClInclude Include="deps\IMGUI\imgui_impl_dx11.h" />
@@ -129,7 +131,7 @@
     <ClInclude Include="deps\IMGUI\imstb_truetype.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="HWInfo.h" />
-    <ClInclude Include="Injector\Injector.h" />
+    <ClInclude Include="Injector\ManualMapInjector.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="Protection.h" />
     <ClInclude Include="xorstr.hpp" />

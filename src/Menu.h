@@ -9,6 +9,11 @@
 #include <dinput.h>
 #include <tchar.h>
 #include "Client.h"
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iterator>
 
 #define ZER0_WIDTH 350
 #define ZER0_HEIGHT 430
@@ -19,13 +24,17 @@ enum state {
 	cheats
 };
 
+struct subscription {
+	std::string name;
+	std::string lenght;
+};
+
 class Menu
 {
 public:
 	Menu();
 
 	void mainMenu();
-
 	bool AppOpen = true;
 	ID3D11ShaderResourceView* my_texture = NULL;
 	ImVec2 image_size;
@@ -33,6 +42,8 @@ public:
 	int state = state::loading;
 	bool loginError = false;
 	std::string loadingType = _xor_("Loading..");
+	std::string errormsg = _xor_("Invalid credentials");
+	std::vector<subscription> subscriptions = {};
 	void doLogin();
 private:
 	int currentCheat = 0;

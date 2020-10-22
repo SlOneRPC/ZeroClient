@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 	Anti debuggers run loop (run on a seperate thread)
 */
 void runTimeChecks::runDebugLoop() {
-	while (m_Menu->AppOpen) {
+	while (m_Menu) {
 		antiDebug();
 		std::this_thread::sleep_for(300ms);//sleep to reduce cpu usage
 	}

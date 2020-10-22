@@ -11,7 +11,5 @@ void runTimeChecks::antiDump() {
 	SizeOfImage();
 
 #endif // _DEBUG
-
-	timedump = GetTickCount();//store tickcount to measure the time it takes for the function to finish
 }
 

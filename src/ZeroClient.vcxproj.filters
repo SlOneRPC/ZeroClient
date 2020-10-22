@@ -72,10 +72,13 @@
     <ClCompile Include="Protections\AntiDump.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Injector\Injector.cpp">
+    <ClCompile Include="HWInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HWInfo.cpp">
+    <ClCompile Include="deps\cryptopp\files.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Injector\ManualMapInjector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,10 +146,13 @@
     <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Injector\Injector.h">
+    <ClInclude Include="HWInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HWInfo.h">
+    <ClInclude Include="deps\cryptopp\files.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Injector\ManualMapInjector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
