@@ -89,7 +89,7 @@ StyleCopReport.xml
 *.scc
 
 Server_src/cheat.dll
-src/Protections
+src/Protections/
 
 # Chutzpah Test files
 _Chutzpah*
